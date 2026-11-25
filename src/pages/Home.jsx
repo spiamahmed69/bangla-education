@@ -6,6 +6,8 @@ import { CATEGORIES } from '../lib/sampleData'
 export default function Home() {
   const { courses, dataLoading } = useStore()
   const featured = courses.slice(0, 6)
+  // ফ্রি কোর্স — দাম ৳০ এমন আসল কোর্স থাকলেই দেখাবে, না থাকলে সেকশনই আসবে না
+  const freeCourses = courses.filter(c => Number(c.price || 0) === 0)
   // শিক্ষক তালিকা কোর্স থেকে বানানো — আসল শিক্ষকের পাশে নমুনা লেবেল থাকবে না
   const teachers = []
   courses.forEach(c => {
@@ -72,6 +74,20 @@ export default function Home() {
           </>
         )}
       </section>
+
+      {/* ফ্রি কোর্স — দাম ৳০ এমন কোর্স থাকলেই দেখাবে */}
+      {!dataLoading && freeCourses.length > 0 && (
+        <section className="mx-auto max-w-6xl px-5 pt-12">
+          <div className="flex items-end justify-between">
+            <h2 className="text-2xl font-bold text-ink">ফ্রি কোর্স</h2>
+            <Link to="/courses?price=free" className="font-bold text-primary">সব ফ্রি কোর্স →</Link>
+          </div>
+          <p className="mt-1 text-sm text-muted">টাকা লাগবে না — লগইন করে ফ্রি এনরোল করলেই অ্যাডমিন অ্যাপ্রুভের পর ক্লাস খুলবে।</p>
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {freeCourses.slice(0, 6).map(c => <CourseCard key={c.id} course={c} />)}
+          </div>
+        </section>
+      )}
 
       {/* কেনার ধাপ */}
       <section className="mx-auto max-w-6xl px-5 pt-12">

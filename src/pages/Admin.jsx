@@ -315,7 +315,7 @@ export default function Admin() {
                 <div><label className={labelCls}>শিক্ষক</label><input className={inputCls} value={courseForm.teacher} onChange={e => setCourseForm({ ...courseForm, teacher: e.target.value })} placeholder="আসল নাম লিখুন" /></div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div><label className={labelCls}>দাম (৳)</label><input type="number" min="0" className={inputCls} value={courseForm.price} onChange={e => setCourseForm({ ...courseForm, price: e.target.value })} /></div>
+                <div><label className={labelCls}>দাম (৳) — ০ দিলে কোর্সটি ফ্রি হবে</label><input type="number" min="0" className={inputCls} value={courseForm.price} onChange={e => setCourseForm({ ...courseForm, price: e.target.value })} /></div>
                 <div><label className={labelCls}>আগের দাম (৳) — না থাকলে খালি রাখুন</label><input type="number" min="0" className={inputCls} value={courseForm.oldPrice || ''} onChange={e => setCourseForm({ ...courseForm, oldPrice: e.target.value })} /></div>
               </div>
               <div><label className={labelCls}>বিবরণ</label><textarea rows="3" className={inputCls} value={courseForm.description} onChange={e => setCourseForm({ ...courseForm, description: e.target.value })} /></div>

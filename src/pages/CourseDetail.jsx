@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useStore } from '../lib/store'
 import { CoverArt } from '../components/Layout'
-import { bn, hasFreeDemo } from '../components/CourseCard'
+import { bn, hasFreeDemo, isFreeCourse } from '../components/CourseCard'
+import { useWishlist } from '../lib/wishlist'
 import SecurePlayer from '../components/SecurePlayer'
 
 // তারার চিহ্ন: ৪ দিলে ★★★★☆
@@ -10,7 +11,8 @@ export const starsText = (n) => '★'.repeat(Math.max(0, Math.min(5, Math.round(
 
 export default function CourseDetail() {
   const { id } = useParams()
-  const { getCourse, user, isEnrolled, pendingOrderFor, dataLoading, reviewsByCourse, averageRating, submitReview, deleteReview, completedLessonIds, progressPct, getQuiz } = useStore()
+  const { getCourse, user, isEnrolled, pendingOrderFor, dataLoading, reviewsByCourse, averageRating, submitReview, deleteReview, completedLessonIds, progressPct, getQuiz, enrollmentCount } = useStore()
+  const { isWishlisted, toggleWishlist } = useWishlist()
   const course = getCourse(id)
   const [quizExists, setQuizExists] = useState(false)
 
@@ -67,6 +69,9 @@ export default function CourseDetail() {
           <h1 className="mt-4 text-3xl font-bold text-ink">{course.title}</h1>
           <p className="mt-2 text-muted">{course.description}</p>
           <p className="mt-3 text-sm text-muted">শিক্ষক: {course.teacher}{course.sample ? ' (নমুনা)' : ''}</p>
+          {enrollmentCount(course.id) > 0 && (
+            <p className="mt-1 text-sm text-muted">{enrollmentCount(course.id).toLocaleString('bn-BD')} জন কিনেছে</p>
+          )}
           {avg !== null ? (
             <p className="mt-2 text-sm font-bold text-amber-700">★ {avg.toLocaleString('bn-BD')} • {courseReviews.length.toLocaleString('bn-BD')}টি রিভিউ</p>
           ) : (
@@ -211,8 +216,14 @@ export default function CourseDetail() {
         <aside>
           <div className="sticky top-24 rounded-[2rem] bg-white p-6 shadow-[0_8px_30px_rgba(37,99,235,0.10)]">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-ink">৳{bn(course.price)}</span>
-              {course.oldPrice && <span className="text-muted line-through">৳{bn(course.oldPrice)}</span>}
+              {isFreeCourse(course) ? (
+                <span className="text-3xl font-bold text-emerald-700">ফ্রি</span>
+              ) : (
+                <>
+                  <span className="text-3xl font-bold text-ink">৳{bn(course.price)}</span>
+                  {course.oldPrice && <span className="text-muted line-through">৳{bn(course.oldPrice)}</span>}
+                </>
+              )}
             </div>
             <ul className="mt-4 space-y-2 text-sm text-muted">
               <li>✓ {course.lessons?.length || 0}টি ভিডিও ক্লাস (ইউটিউব)</li>
@@ -228,8 +239,20 @@ export default function CourseDetail() {
               </div>
             ) : (
               <Link to={user ? `/checkout/${course.id}` : '/login'} className="mt-6 block rounded-full bg-cta py-3 text-center font-bold text-white hover:bg-cta-dark">
-                {user ? 'এখনই কিনুন' : 'কিনতে লগইন করুন'}
+                {user ? (isFreeCourse(course) ? 'ফ্রি এনরোল করুন' : 'এখনই কিনুন') : 'কিনতে লগইন করুন'}
               </Link>
+            )}
+            {!enrolled && (
+              <button
+                type="button"
+                onClick={() => toggleWishlist(course.id)}
+                className="mt-3 w-full rounded-full bg-white py-3 font-bold text-ink shadow-sm ring-1 ring-blue-100 hover:bg-blue-50"
+              >
+                {isWishlisted(course.id) ? '❤️ উইশলিস্টে আছে — সরান' : '🤍 পরে কিনবো — উইশলিস্টে রাখুন'}
+              </button>
+            )}
+            {isFreeCourse(course) && !enrolled && !pending && (
+              <p className="mt-3 text-center text-xs font-semibold text-emerald-700">এই কোর্সটি ফ্রি — টাকা পাঠাতে হবে না, এনরোল করলেই অ্যাডমিন অ্যাপ্রুভের পর ক্লাস খুলবে।</p>
             )}
             {!user && <p className="mt-3 text-center text-xs text-muted">লগইন ছাড়া কেনা যাবে না।</p>}
           </div>

@@ -281,6 +281,11 @@ export function StoreProvider({ children }) {
     return orders.find(o => o.userId === user.uid && o.courseId === courseId && o.status === 'pending') || null
   }, [user, orders])
 
+  // ছাত্র সংখ্যা — আসল এনরোলমেন্ট গুনে: এক কোর্সে কতজন সক্রিয়ভাবে কিনেছে
+  const enrollmentCount = useCallback((courseId) =>
+    enrollments.filter(e => e.courseId === courseId && e.status === 'active').length,
+  [enrollments])
+
   const submitOrder = useCallback(async ({ courseId, method, senderNumber, txnId, couponCode = '', couponDiscount = 0, finalPrice = null }) => {
     const course = courses.find(c => c.id === courseId)
     const originalPrice = course?.price || 0
@@ -629,7 +634,7 @@ export function StoreProvider({ children }) {
     firebaseMode, user, authLoading, dataLoading,
     courses, settings, orders, enrollments, allUsers, reviews, coupons, progress, quizzes,
     register, login, logout, logoutDevice,
-    isEnrolled, pendingOrderFor, submitOrder, decideOrder,
+    isEnrolled, pendingOrderFor, enrollmentCount, submitOrder, decideOrder,
     saveCourse, deleteCourse, saveSettings, setUserRole, getLessonVideo,
     reviewsByCourse, averageRating, submitReview, deleteReview,
     validateCoupon, saveCoupon, deleteCoupon,
@@ -637,7 +642,7 @@ export function StoreProvider({ children }) {
     getQuiz, saveQuiz, deleteQuiz,
     getCourse: (id) => courses.find(c => c.id === id),
   }), [firebaseMode, user, authLoading, dataLoading, courses, settings, orders, enrollments, allUsers, reviews, coupons, progress, quizzes,
-    register, login, logout, logoutDevice, isEnrolled, pendingOrderFor, submitOrder, decideOrder,
+    register, login, logout, logoutDevice, isEnrolled, pendingOrderFor, enrollmentCount, submitOrder, decideOrder,
     saveCourse, deleteCourse, saveSettings, setUserRole, getLessonVideo,
     reviewsByCourse, averageRating, submitReview, deleteReview,
     validateCoupon, saveCoupon, deleteCoupon,

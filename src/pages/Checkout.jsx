@@ -103,8 +103,8 @@ export default function Checkout() {
     try {
       await submitOrder({
         courseId: course.id, method,
-        senderNumber: senderNumber.trim() || 'কুপনে ফ্রি',
-        txnId: txnId.trim() || 'কুপনে ফ্রি',
+        senderNumber: senderNumber.trim() || (course.price === 0 ? 'ফ্রি কোর্স' : 'কুপনে ফ্রি'),
+        txnId: txnId.trim() || (course.price === 0 ? 'ফ্রি কোর্স' : 'কুপনে ফ্রি'),
         couponCode, couponDiscount, finalPrice: priceToPay,
       })
       setDone(true)
@@ -119,8 +119,8 @@ export default function Checkout() {
       <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
         <div className="rounded-[2rem] bg-white p-10 shadow-[0_8px_30px_rgba(37,99,235,0.10)]">
           <div className="text-5xl">✓</div>
-          <h1 className="mt-4 text-2xl font-bold text-ink">পেমেন্ট জমা হয়েছে</h1>
-          <p className="mt-2 text-muted">অ্যাডমিন আপনার ট্রানজাকশন যাচাই করে অ্যাপ্রুভ করলেই “{course.title}” কোর্সের ক্লাস খুলে যাবে।</p>
+          <h1 className="mt-4 text-2xl font-bold text-ink">{isFree ? 'এনরোলমেন্ট জমা হয়েছে' : 'পেমেন্ট জমা হয়েছে'}</h1>
+          <p className="mt-2 text-muted">{isFree ? `অ্যাডমিন অ্যাপ্রুভ করলেই “${course.title}” কোর্সের ক্লাস খুলে যাবে।` : `অ্যাডমিন আপনার ট্রানজাকশন যাচাই করে অ্যাপ্রুভ করলেই “${course.title}” কোর্সের ক্লাস খুলে যাবে।`}</p>
           <button onClick={() => navigate('/my-courses')} className="mt-6 rounded-full bg-primary px-6 py-3 font-bold text-white">আমার কোর্স দেখুন</button>
         </div>
       </div>
@@ -129,8 +129,8 @@ export default function Checkout() {
 
   return (
     <div className="mx-auto max-w-3xl px-5 pt-10">
-      <h1 className="text-3xl font-bold text-ink">কোর্স কিনুন</h1>
-      <p className="mt-2 text-muted">পেমেন্ট এই সাইট থেকে সরাসরি নয় — নিচের নম্বরে টাকা পাঠিয়ে তথ্য জমা দিন।</p>
+      <h1 className="text-3xl font-bold text-ink">{course.price === 0 ? 'ফ্রি এনরোল করুন' : 'কোর্স কিনুন'}</h1>
+      <p className="mt-2 text-muted">{course.price === 0 ? 'এই কোর্সটি ফ্রি — এনরোল করলেই অ্যাডমিন অ্যাপ্রুভের পর ক্লাস খুলবে।' : 'পেমেন্ট এই সাইট থেকে সরাসরি নয় — নিচের নম্বরে টাকা পাঠিয়ে তথ্য জমা দিন।'}</p>
 
       <div className="mt-6 rounded-[2rem] bg-white p-6 shadow-[0_8px_30px_rgba(37,99,235,0.10)] sm:p-8">
         <div className="flex items-center justify-between">
@@ -186,7 +186,7 @@ export default function Checkout() {
           <div className="rounded-2xl bg-page p-4 text-center">
             <p className="text-sm text-muted">{method === 'bkash' ? 'বিকাশ' : 'নগদ'} নম্বর (Send Money)</p>
             {isFree ? (
-              <p className="mt-1 font-bold text-emerald-700">কুপনে পুরো ছাড় পেয়েছেন — টাকা পাঠাতে হবে না।</p>
+              <p className="mt-1 font-bold text-emerald-700">{course.price === 0 ? 'এই কোর্সটি ফ্রি — টাকা পাঠাতে হবে না।' : 'কুপনে পুরো ছাড় পেয়েছেন — টাকা পাঠাতে হবে না।'}</p>
             ) : payNumber ? (
               <p className="mt-1 text-2xl font-bold tracking-wider text-ink">{payNumber}</p>
             ) : (

@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../lib/store'
 import CourseCard from '../components/CourseCard'
+import { useWishlist } from '../lib/wishlist'
 import { bn } from '../components/CourseCard'
 
 export default function MyCourses() {
   const { user, authLoading, courses, orders, enrollments, completedLessonIds, progressPct, getQuiz } = useStore()
+  const { wishlist } = useWishlist()
   const [quizMap, setQuizMap] = useState({})
 
   const myEnrollments = enrollments.filter(e => e.userId === user?.uid && e.status === 'active')
@@ -78,6 +80,20 @@ export default function MyCourses() {
           })}
         </div>
       )}
+
+      {/* উইশলিস্ট — পরে কিনবো বলে সেভ করা কোর্স (শুধু এই ডিভাইসে থাকে) */}
+      <h2 className="mt-12 text-xl font-bold text-ink">আমার উইশলিস্ট ({wishlist.length.toLocaleString('bn-BD')}টি)</h2>
+      {(() => {
+        const wished = courses.filter(c => wishlist.includes(c.id) && !myEnrollments.some(e => e.courseId === c.id))
+        if (wished.length === 0) {
+          return <p className="mt-3 text-muted">উইশলিস্টে এখনো কিছু নেই — কোর্সের কার্ডের হার্টে (🤍) ক্লিক করে পরে কিনবো বলে রাখুন।</p>
+        }
+        return (
+          <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {wished.map(c => <CourseCard key={c.id} course={c} />)}
+          </div>
+        )
+      })()}
 
       <h2 className="mt-12 text-xl font-bold text-ink">আমার পেমেন্টসমূহ</h2>
       {myOrders.length === 0 ? (
