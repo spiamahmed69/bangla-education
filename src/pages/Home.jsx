@@ -4,7 +4,7 @@ import CourseCard from '../components/CourseCard'
 import { CATEGORIES } from '../lib/sampleData'
 
 export default function Home() {
-  const { courses } = useStore()
+  const { courses, dataLoading } = useStore()
   const featured = courses.slice(0, 6)
   // শিক্ষক তালিকা কোর্স থেকে বানানো — আসল শিক্ষকের পাশে নমুনা লেবেল থাকবে না
   const teachers = []
@@ -59,12 +59,18 @@ export default function Home() {
           <h2 className="text-2xl font-bold text-ink">জনপ্রিয় কোর্স</h2>
           <Link to="/courses" className="font-bold text-primary">সব দেখুন →</Link>
         </div>
-        {featured.length > 0 && featured.every(c => c.sample) && (
-          <p className="mt-1 text-sm text-muted">নিচের সব কোর্স নমুনা — আসল কোর্স অ্যাডমিন প্যানেল থেকে যুক্ত করা হবে।</p>
+        {dataLoading ? (
+          <p className="mt-6 text-muted">লোড হচ্ছে…</p>
+        ) : (
+          <>
+            {featured.length > 0 && featured.every(c => c.sample) && (
+              <p className="mt-1 text-sm text-muted">নিচের সব কোর্স নমুনা — আসল কোর্স অ্যাডমিন প্যানেল থেকে যুক্ত করা হবে।</p>
+            )}
+            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {featured.map(c => <CourseCard key={c.id} course={c} />)}
+            </div>
+          </>
         )}
-        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map(c => <CourseCard key={c.id} course={c} />)}
-        </div>
       </section>
 
       {/* কেনার ধাপ */}
@@ -91,20 +97,26 @@ export default function Home() {
       {/* শিক্ষক */}
       <section className="mx-auto max-w-6xl px-5 pt-12">
         <h2 className="text-2xl font-bold text-ink">আমাদের শিক্ষকবৃন্দ</h2>
-        {teachers.length > 0 && teachers.every(t => t.sample) && (
-          <p className="mt-1 text-sm text-muted">নমুনা শিক্ষক তালিকা — আসল শিক্ষকদের তথ্য অ্যাডমিন যুক্ত করবেন।</p>
-        )}
-        <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {teachers.map(t => (
-            <div key={t.name} className="rounded-3xl bg-white p-6 text-center shadow-[0_8px_30px_rgba(37,99,235,0.08)]">
-              <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold text-white" style={{ background: t.color }}>
-                {t.name.slice(0, 1)}
-              </span>
-              <h3 className="mt-3 font-bold text-ink">{t.name}</h3>
-              <p className="text-sm text-muted">{t.subject}{t.sample ? ' • নমুনা' : ''}</p>
+        {dataLoading ? (
+          <p className="mt-6 text-muted">লোড হচ্ছে…</p>
+        ) : (
+          <>
+            {teachers.length > 0 && teachers.every(t => t.sample) && (
+              <p className="mt-1 text-sm text-muted">নমুনা শিক্ষক তালিকা — আসল শিক্ষকদের তথ্য অ্যাডমিন যুক্ত করবেন।</p>
+            )}
+            <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+              {teachers.map(t => (
+                <div key={t.name} className="rounded-3xl bg-white p-6 text-center shadow-[0_8px_30px_rgba(37,99,235,0.08)]">
+                  <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold text-white" style={{ background: t.color }}>
+                    {t.name.slice(0, 1)}
+                  </span>
+                  <h3 className="mt-3 font-bold text-ink">{t.name}</h3>
+                  <p className="text-sm text-muted">{t.subject}{t.sample ? ' • নমুনা' : ''}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </section>
     </div>
   )

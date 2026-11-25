@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useStore } from '../lib/store'
+import SecurePlayer from '../components/SecurePlayer'
 
 // ভিডিও URL শুধু এনরোল করা ইউজারের জন্য getLessonVideo() দিয়ে আনা হয়।
 // কেনা হয়নি এমন ইউজারের কাছে iframe তো দূরের কথা, ভিডিওর লিংকও পৌঁছায় না।
@@ -69,13 +70,7 @@ export default function Learn() {
         {loadingVideo ? (
           <div className="flex aspect-video items-center justify-center text-white">ভিডিও লোড হচ্ছে…</div>
         ) : youtubeId ? (
-          <iframe
-            className="aspect-video w-full"
-            src={`https://www.youtube-nocookie.com/embed/${youtubeId}`}
-            title={lesson.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+          <SecurePlayer videoId={youtubeId} title={lesson.title} />
         ) : (
           <div className="flex aspect-video flex-col items-center justify-center px-6 text-center text-white">
             <p className="text-xl font-bold">এই ক্লাসের ভিডিও লিংক এখনো বসানো হয়নি</p>
