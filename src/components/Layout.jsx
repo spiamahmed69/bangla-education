@@ -10,8 +10,15 @@ function DemoBanner({ firebaseMode }) {
   )
 }
 
-export function CoverArt({ title, gradient, className = '' }) {
+export function CoverArt({ title, gradient, imageUrl, className = '' }) {
   const initials = (title || 'বা').trim().slice(0, 2)
+  if (imageUrl) {
+    return (
+      <div className={`relative overflow-hidden ${className}`}>
+        <img src={imageUrl} alt={title} className="h-full w-full object-cover" loading="lazy" />
+      </div>
+    )
+  }
   return (
     <div
       className={`relative flex items-center justify-center overflow-hidden ${className}`}

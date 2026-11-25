@@ -11,12 +11,12 @@ export default function CourseCard({ course }) {
   return (
     <article className="fade-up overflow-hidden rounded-3xl bg-white shadow-[0_8px_30px_rgba(37,99,235,0.08)] transition hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(37,99,235,0.16)]">
       <Link to={`/courses/${course.id}`}>
-        <CoverArt title={course.title} gradient={course.gradient} className="h-40 w-full" />
+        <CoverArt title={course.title} gradient={course.gradient} imageUrl={course.imageUrl} className="h-40 w-full" />
       </Link>
       <div className="p-5">
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-primary">{course.level}</span>
-          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">নমুনা কোর্স</span>
+          {course.sample && <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">নমুনা কোর্স</span>}
         </div>
         <Link to={`/courses/${course.id}`}>
           <h3 className="mt-3 text-lg font-bold leading-snug text-ink hover:text-primary">{course.title}</h3>

@@ -83,7 +83,7 @@ export default function Admin() {
     setMsg('কোর্স সংরক্ষণ হয়েছে।')
   }
 
-  const startLessonForm = (lesson) => setLessonForm(lesson ? { ...lesson } : { id: `l${Date.now()}`, title: '', duration: '', youtubeId: '', pdfUrl: '' })
+  const startLessonForm = (lesson) => setLessonForm(lesson ? { ...lesson } : { id: `l${Date.now()}`, title: '', duration: '', youtubeId: '', pdfUrl: '', pdfUrl2: '' })
 
   const saveLessonForm = async (e) => {
     e.preventDefault()
@@ -236,6 +236,7 @@ export default function Admin() {
                   <div><label className={labelCls}>সময়কাল</label><input className={inputCls} value={lessonForm.duration} onChange={e => setLessonForm({ ...lessonForm, duration: e.target.value })} placeholder="যেমন: ৩০ মিনিট" /></div>
                   <div><label className={labelCls}>ইউটিউব লিংক (পূর্ণ URL বা ভিডিও ID)</label><input className={inputCls} value={lessonForm.youtubeId} onChange={e => setLessonForm({ ...lessonForm, youtubeId: e.target.value })} placeholder="https://www.youtube.com/watch?v=…" /></div>
                   <div><label className={labelCls}>নোটের PDF লিংক (আপলোড নয়, শুধু লিংক)</label><input className={inputCls} value={lessonForm.pdfUrl} onChange={e => setLessonForm({ ...lessonForm, pdfUrl: e.target.value })} placeholder="https://…" /></div>
+                  <div><label className={labelCls}>প্র্যাকটিস সেটের PDF লিংক (ঐচ্ছিক)</label><input className={inputCls} value={lessonForm.pdfUrl2 || ''} onChange={e => setLessonForm({ ...lessonForm, pdfUrl2: e.target.value })} placeholder="https://…" /></div>
                   <div className="flex gap-3">
                     <button className="rounded-full bg-primary px-6 py-2.5 font-bold text-white">সংরক্ষণ</button>
                     <button type="button" onClick={() => setLessonForm(null)} className="rounded-full bg-slate-100 px-6 py-2.5 font-bold text-ink">বাতিল</button>

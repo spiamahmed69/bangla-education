@@ -13,6 +13,7 @@ export const CATEGORIES = [
 export const SAMPLE_COURSES = [
   {
     id: 'bangla-hsc',
+    sample: true,
     title: 'বাংলা ভাষা ও সাহিত্য',
     category: 'bangla',
     level: 'এইচএসসি',
@@ -32,6 +33,7 @@ export const SAMPLE_COURSES = [
   },
   {
     id: 'english-grammar',
+    sample: true,
     title: 'ইংরেজি গ্রামার — সহজে শিখি',
     category: 'english',
     level: 'এসএসসি',
@@ -50,6 +52,7 @@ export const SAMPLE_COURSES = [
   },
   {
     id: 'math-ssc',
+    sample: true,
     title: 'গণিত — বীজগণিত ও জ্যামিতি',
     category: 'math',
     level: 'এসএসসি',
@@ -68,6 +71,7 @@ export const SAMPLE_COURSES = [
   },
   {
     id: 'physics-hsc',
+    sample: true,
     title: 'পদার্থবিজ্ঞান — প্রথম পত্র',
     category: 'science',
     level: 'এইচএসসি',
@@ -86,6 +90,7 @@ export const SAMPLE_COURSES = [
   },
   {
     id: 'ict-hsc',
+    sample: true,
     title: 'তথ্য ও যোগাযোগ প্রযুক্তি',
     category: 'ict',
     level: 'এইচএসসি',
@@ -103,6 +108,7 @@ export const SAMPLE_COURSES = [
   },
   {
     id: 'chemistry-hsc',
+    sample: true,
     title: 'রসায়ন — প্রথম পত্র',
     category: 'science',
     level: 'এইচএসসি',

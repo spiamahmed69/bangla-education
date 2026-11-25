@@ -90,6 +90,9 @@ export default function Learn() {
         ) : (
           <span className="rounded-full bg-slate-100 px-6 py-3 font-bold text-muted">📄 এই ক্লাসের নোটের PDF লিংক এখনো বসানো হয়নি</span>
         )}
+        {lesson.pdfUrl2 && (
+          <a href={lesson.pdfUrl2} target="_blank" rel="noreferrer" className="rounded-full bg-primary px-6 py-3 font-bold text-white hover:bg-primary-dark">📄 প্র্যাকটিস সেটের PDF ডাউনলোড</a>
+        )}
         {prev && <Link to={`/learn/${course.id}/${prev.id}`} className="rounded-full bg-white px-6 py-3 font-bold text-ink shadow-sm">← আগের ক্লাস</Link>}
         {next && <Link to={`/learn/${course.id}/${next.id}`} className="rounded-full bg-white px-6 py-3 font-bold text-ink shadow-sm">পরের ক্লাস →</Link>}
       </div>

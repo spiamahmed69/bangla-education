@@ -24,7 +24,7 @@ export default function CourseDetail() {
     <div className="mx-auto max-w-6xl px-5 pt-10">
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <CoverArt title={course.title} gradient={course.gradient} className="h-56 w-full rounded-[2rem] sm:h-72" />
+          <CoverArt title={course.title} gradient={course.gradient} imageUrl={course.imageUrl} className="h-56 w-full rounded-[2rem] sm:h-72" />
           <div className="mt-5 flex flex-wrap gap-2">
             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-primary">{course.level}</span>
             <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">নমুনা কোর্স</span>
