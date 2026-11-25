@@ -82,7 +82,8 @@ export function StoreProvider({ children }) {
               const ls = await getDocs(collection(db, 'courses', d.id, 'lessons'))
               list.push({ id: d.id, ...data, lessons: ls.docs.map(x => ({ id: x.id, ...x.data() })) })
             }
-            setCourses(list)
+            // আসল কোর্সের সাথে ১০টি ডেমো (নমুনা) কোর্সও দেখাবে
+            setCourses([...list, ...SAMPLE_COURSES.filter(s => !list.some(c => c.id === s.id))])
           }
           const s = await getDoc(doc(db, 'settings', 'payment'))
           if (s.exists()) setSettings({ ...DEFAULT_SETTINGS, ...s.data() })
