@@ -104,12 +104,19 @@ export default function Layout({ children }) {
               <li><Link className="hover:text-white" to="/courses">কোর্সসমূহ</Link></li>
               <li><Link className="hover:text-white" to="/my-courses">আমার কোর্স</Link></li>
               <li><Link className="hover:text-white" to="/about">আমাদের সম্পর্কে</Link></li>
+              <li><Link className="hover:text-white" to="/contact">যোগাযোগ</Link></li>
+              <li><Link className="hover:text-white" to="/faq">সাধারণ প্রশ্ন (FAQ)</Link></li>
+              <li><Link className="hover:text-white" to="/refund-policy">রিফান্ড নীতিমালা</Link></li>
               <li><Link className="hover:text-white" to="/login">লগইন</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="font-bold">যোগাযোগ</h3>
-            <p className="mt-3 text-sm text-white/70">ফোন ও ইমেইল শীঘ্রই যুক্ত হচ্ছে।</p>
+            <ul className="mt-3 space-y-2 text-sm text-white/70">
+              <li>ফোন: <a href="tel:01400661593" className="font-semibold text-white hover:underline">01400661593</a></li>
+              <li>ইমেইল: <a href="mailto:banglaacademy111@gmail.com" className="break-all font-semibold text-white hover:underline">banglaacademy111@gmail.com</a></li>
+              <li>Telegram: <a href="https://t.me/banglaacademy111" target="_blank" rel="noreferrer" className="font-semibold text-white hover:underline">t.me/banglaacademy111</a></li>
+            </ul>
           </div>
         </div>
         <div className="border-t border-white/10 py-4 text-center text-xs text-white/50">

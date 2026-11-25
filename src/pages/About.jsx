@@ -28,7 +28,11 @@ export default function About() {
             <p className="mt-1 text-sm text-muted">যেকোনো সময়, যেকোনো জায়গা থেকে</p>
           </div>
         </div>
-        <p className="mt-6 text-sm text-muted">যোগাযোগের ফোন ও ইমেইল শীঘ্রই যুক্ত হচ্ছে।</p>
+        <p className="mt-6 text-sm text-muted">
+          যোগাযোগ: ফোন <a href="tel:01400661593" className="font-bold text-primary">01400661593</a> •
+          ইমেইল <a href="mailto:banglaacademy111@gmail.com" className="font-bold text-primary">banglaacademy111@gmail.com</a> •
+          Telegram <a href="https://t.me/banglaacademy111" target="_blank" rel="noreferrer" className="font-bold text-primary">t.me/banglaacademy111</a>
+        </p>
       </div>
     </div>
   )

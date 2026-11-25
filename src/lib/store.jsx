@@ -90,7 +90,13 @@ export function StoreProvider({ children }) {
             setCourses([...list, ...SAMPLE_COURSES.filter(s => !list.some(c => c.id === s.id))])
           }
           const s = await getDoc(doc(db, 'settings', 'payment'))
-          if (s.exists()) setSettings({ ...DEFAULT_SETTINGS, ...s.data() })
+          if (s.exists()) {
+            // Firestore-এ খালি স্ট্রিং থাকলে তা ডিফল্ট নম্বর মুছে দিত — খালি মান বাদ দিয়ে মার্জ করা হয়
+            const saved = Object.fromEntries(
+              Object.entries(s.data()).filter(([, v]) => !(typeof v === 'string' && v.trim() === ''))
+            )
+            setSettings({ ...DEFAULT_SETTINGS, ...saved })
+          }
           const os = await getDocs(collection(db, 'orders'))
           setOrders(os.docs.map(d => ({ id: d.id, ...d.data() })))
           const es = await getDocs(collection(db, 'enrollments'))

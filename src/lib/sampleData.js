@@ -214,7 +214,7 @@ export const SAMPLE_TEACHERS = [
 ]
 
 export const DEFAULT_SETTINGS = {
-  bkashNumber: '',
-  nagadNumber: '',
+  bkashNumber: '01400661593',
+  nagadNumber: '01400661593',
   siteNotice: 'পেমেন্ট করার আগে অ্যাডমিনের দেওয়া নম্বরটি ভালো করে মিলিয়ে নিন।',
 }
