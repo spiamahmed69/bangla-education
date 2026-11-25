@@ -44,22 +44,22 @@ export default function Faq() {
   const [open, setOpen] = useState(0)
   return (
     <div className="mx-auto max-w-3xl px-5 pt-10">
-      <h1 className="text-3xl font-bold text-ink">সাধারণ প্রশ্ন (FAQ)</h1>
-      <p className="mt-2 text-muted">কোর্স কেনা, পেমেন্ট আর ক্লাস নিয়ে সবচেয়ে বেশি জিজ্ঞাসা করা প্রশ্নগুলোর উত্তর।</p>
+      <h1 className="text-3xl font-bold text-ink dark:text-slate-100">সাধারণ প্রশ্ন (FAQ)</h1>
+      <p className="mt-2 text-muted dark:text-slate-400">কোর্স কেনা, পেমেন্ট আর ক্লাস নিয়ে সবচেয়ে বেশি জিজ্ঞাসা করা প্রশ্নগুলোর উত্তর।</p>
 
       <div className="mt-6 space-y-3">
         {FAQS.map((f, i) => (
-          <div key={f.q} className="overflow-hidden rounded-3xl bg-white shadow-[0_8px_30px_rgba(37,99,235,0.08)]">
-            <button onClick={() => setOpen(open === i ? -1 : i)} className="flex w-full items-center justify-between gap-3 px-6 py-4 text-left font-bold text-ink">
+          <div key={f.q} className="overflow-hidden rounded-3xl bg-white dark:bg-slate-800 shadow-[0_8px_30px_rgba(37,99,235,0.08)]">
+            <button onClick={() => setOpen(open === i ? -1 : i)} className="flex w-full items-center justify-between gap-3 px-6 py-4 text-left font-bold text-ink dark:text-slate-100">
               <span>{f.q}</span>
               <span className="shrink-0 text-xl text-primary">{open === i ? '−' : '+'}</span>
             </button>
-            {open === i && <p className="border-t border-slate-100 px-6 py-4 text-sm leading-relaxed text-muted">{f.a}</p>}
+            {open === i && <p className="border-t border-slate-100 px-6 py-4 text-sm leading-relaxed text-muted dark:text-slate-400">{f.a}</p>}
           </div>
         ))}
       </div>
 
-      <p className="mt-6 rounded-3xl bg-white p-6 text-sm leading-relaxed text-muted shadow-[0_8px_30px_rgba(37,99,235,0.08)]">
+      <p className="mt-6 rounded-3xl bg-white dark:bg-slate-800 p-6 text-sm leading-relaxed text-muted dark:text-slate-400 shadow-[0_8px_30px_rgba(37,99,235,0.08)]">
         এখানে উত্তর না পেলে <Link to="/contact" className="font-bold text-primary">যোগাযোগ পেজ</Link> থেকে
         ফোন, ইমেইল বা Telegram-এ মেসেজ দিন — অ্যাডমিন দেখে উত্তর দেবেন।
       </p>

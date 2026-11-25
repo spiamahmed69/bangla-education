@@ -1,6 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+/* ডার্ক মোড ক্লাস-ভিত্তিক — হেডারের টগল বাটন <html>-এ .dark বসায় */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-page: #F4F5FF;
   --color-primary: #2563EB;
@@ -35,4 +38,13 @@ input, select, textarea { font-size: 16px; }
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow: 0 8px 30px rgba(37, 99, 235, 0.10);
+}
+.dark body {
+  background-color: #0F172A;
+  color: #E2E8F0;
+}
+.dark .glass {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
 }

@@ -5,16 +5,16 @@ import { useStore } from '../lib/store'
 function Card({ title, subtitle, children }) {
   return (
     <div className="mx-auto mt-12 w-full max-w-md px-5">
-      <div className="rounded-[2rem] bg-white p-8 shadow-[0_8px_30px_rgba(37,99,235,0.10)]">
-        <h1 className="text-2xl font-bold text-ink">{title}</h1>
-        <p className="mt-1 text-sm text-muted">{subtitle}</p>
+      <div className="rounded-[2rem] bg-white dark:bg-slate-800 p-8 shadow-[0_8px_30px_rgba(37,99,235,0.10)]">
+        <h1 className="text-2xl font-bold text-ink dark:text-slate-100">{title}</h1>
+        <p className="mt-1 text-sm text-muted dark:text-slate-400">{subtitle}</p>
         <div className="mt-6">{children}</div>
       </div>
     </div>
   )
 }
 
-const inputCls = 'w-full rounded-2xl border border-blue-100 bg-page px-4 py-3 focus:border-primary focus:outline-none'
+const inputCls = 'w-full rounded-2xl border border-blue-100 dark:border-slate-600 bg-page dark:bg-slate-900 px-4 py-3 focus:border-primary focus:outline-none'
 
 export function Login() {
   const { login, firebaseMode } = useStore()
@@ -46,15 +46,15 @@ export function Login() {
       <form onSubmit={submit} className="space-y-4">
         <input className={inputCls} type="email" required placeholder="ইমেইল" value={email} onChange={e => setEmail(e.target.value)} />
         <input className={inputCls} type="password" required placeholder="পাসওয়ার্ড" value={password} onChange={e => setPassword(e.target.value)} />
-        {error && <p className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p>}
+        {error && <p className="rounded-2xl bg-red-50 dark:bg-red-950 p-3 text-sm font-semibold text-red-700 dark:text-red-300">{error}</p>}
         <button disabled={busy} className="w-full rounded-full bg-primary py-3 font-bold text-white hover:bg-primary-dark disabled:opacity-60">
           {busy ? 'লগইন হচ্ছে…' : 'লগইন'}
         </button>
       </form>
-      <p className="mt-4 rounded-2xl bg-blue-50 p-3 text-xs leading-relaxed text-muted">
+      <p className="mt-4 rounded-2xl bg-blue-50 dark:bg-slate-700 p-3 text-xs leading-relaxed text-muted dark:text-slate-400">
         এক অ্যাকাউন্টে সর্বোচ্চ ২টি ডিভাইসে (মোবাইল/কম্পিউটার) লগইন করা যাবে। ৩য় ডিভাইসে লগইন করতে হলে আগের একটি ডিভাইস থেকে লগআউট করতে হবে।
       </p>
-      <p className="mt-4 text-center text-sm text-muted">অ্যাকাউন্ট নেই? <Link to="/register" className="font-bold text-primary">রেজিস্টার করুন</Link></p>
+      <p className="mt-4 text-center text-sm text-muted dark:text-slate-400">অ্যাকাউন্ট নেই? <Link to="/register" className="font-bold text-primary">রেজিস্টার করুন</Link></p>
     </Card>
   )
 }
@@ -86,8 +86,8 @@ export function Register() {
   if (done) {
     return (
       <Card title="ইমেইল যাচাই করুন" subtitle="আপনার ইমেইলে একটি যাচাই লিংক পাঠানো হয়েছে।">
-        <p className="text-sm leading-relaxed text-muted">
-          <b className="text-ink">{email}</b> ঠিকানায় পাঠানো লিংকে ক্লিক করে ইমেইল যাচাই করুন। তারপর থেকে পাসওয়ার্ড দিয়ে লগইন করতে পারবেন।
+        <p className="text-sm leading-relaxed text-muted dark:text-slate-400">
+          <b className="text-ink dark:text-slate-100">{email}</b> ঠিকানায় পাঠানো লিংকে ক্লিক করে ইমেইল যাচাই করুন। তারপর থেকে পাসওয়ার্ড দিয়ে লগইন করতে পারবেন।
         </p>
         <Link to="/login" className="mt-6 block rounded-full bg-primary py-3 text-center font-bold text-white">লগইন পেজে যান</Link>
       </Card>
@@ -100,17 +100,17 @@ export function Register() {
         <input className={inputCls} required placeholder="আপনার নাম" value={name} onChange={e => setName(e.target.value)} />
         <input className={inputCls} type="email" required placeholder="ইমেইল" value={email} onChange={e => setEmail(e.target.value)} />
         <input className={inputCls} type="password" required placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)" value={password} onChange={e => setPassword(e.target.value)} />
-        {error && <p className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p>}
+        {error && <p className="rounded-2xl bg-red-50 dark:bg-red-950 p-3 text-sm font-semibold text-red-700 dark:text-red-300">{error}</p>}
         <button disabled={busy} className="w-full rounded-full bg-primary py-3 font-bold text-white hover:bg-primary-dark disabled:opacity-60">
           {busy ? 'অ্যাকাউন্ট খোলা হচ্ছে…' : 'রেজিস্টার করুন'}
         </button>
       </form>
       {!firebaseMode && (
-        <p className="mt-4 rounded-2xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
+        <p className="mt-4 rounded-2xl bg-amber-50 dark:bg-amber-950 p-3 text-xs leading-relaxed text-amber-800 dark:text-amber-200">
           ডেমো মোডে ইমেইল পাঠানো যায় না, তাই এখানে রেজিস্টার করলেই সরাসরি লগইন হয়ে যাবে। আসল Firebase যুক্ত হলে প্রথমে ইমেইল যাচাই লিংক যাবে।
         </p>
       )}
-      <p className="mt-4 text-center text-sm text-muted">ইতিমধ্যে অ্যাকাউন্ট আছে? <Link to="/login" className="font-bold text-primary">লগইন করুন</Link></p>
+      <p className="mt-4 text-center text-sm text-muted dark:text-slate-400">ইতিমধ্যে অ্যাকাউন্ট আছে? <Link to="/login" className="font-bold text-primary">লগইন করুন</Link></p>
     </Card>
   )
 }

@@ -22,7 +22,7 @@ export default function CourseCard({ course }) {
   const wished = isWishlisted(course.id)
   const free = isFreeCourse(course)
   return (
-    <article className="fade-up relative overflow-hidden rounded-3xl bg-white shadow-[0_8px_30px_rgba(37,99,235,0.08)] transition hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(37,99,235,0.16)]">
+    <article className="fade-up relative overflow-hidden rounded-3xl bg-white dark:bg-slate-800 shadow-[0_8px_30px_rgba(37,99,235,0.08)] transition hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(37,99,235,0.16)]">
       <Link to={`/courses/${course.id}`}>
         <CoverArt title={course.title} gradient={course.gradient} imageUrl={course.imageUrl} className="h-40 w-full" />
       </Link>
@@ -38,37 +38,37 @@ export default function CourseCard({ course }) {
       </button>
       <div className="p-5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-primary">{course.level}</span>
-          {course.sample && <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">নমুনা কোর্স</span>}
-          {free && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">ফ্রি কোর্স</span>}
-          {hasFreeDemo(course) && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">▶ ফ্রি ডেমো আছে</span>}
+          <span className="rounded-full bg-blue-50 dark:bg-slate-700 px-2.5 py-1 text-xs font-bold text-primary">{course.level}</span>
+          {course.sample && <span className="rounded-full bg-amber-50 dark:bg-amber-950 px-2.5 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">নমুনা কোর্স</span>}
+          {free && <span className="rounded-full bg-emerald-100 dark:bg-emerald-900 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:text-emerald-200">ফ্রি কোর্স</span>}
+          {hasFreeDemo(course) && <span className="rounded-full bg-emerald-100 dark:bg-emerald-900 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:text-emerald-200">▶ ফ্রি ডেমো আছে</span>}
         </div>
         <Link to={`/courses/${course.id}`}>
-          <h3 className="mt-3 text-lg font-bold leading-snug text-ink hover:text-primary">{course.title}</h3>
+          <h3 className="mt-3 text-lg font-bold leading-snug text-ink dark:text-slate-100 hover:text-primary">{course.title}</h3>
         </Link>
-        <p className="mt-1 line-clamp-2 text-sm text-muted">{course.description}</p>
-        <p className="mt-2 text-sm text-muted">শিক্ষক: {course.teacher} • {course.lessons?.length || 0}টি ক্লাস</p>
+        <p className="mt-1 line-clamp-2 text-sm text-muted dark:text-slate-400">{course.description}</p>
+        <p className="mt-2 text-sm text-muted dark:text-slate-400">শিক্ষক: {course.teacher} • {course.lessons?.length || 0}টি ক্লাস</p>
         {students > 0 && (
-          <p className="mt-1 text-sm text-muted">{students.toLocaleString('bn-BD')} জন কিনেছে</p>
+          <p className="mt-1 text-sm text-muted dark:text-slate-400">{students.toLocaleString('bn-BD')} জন কিনেছে</p>
         )}
         {avg !== null && (
-          <p className="mt-1 text-sm font-bold text-amber-700">★ {avg.toLocaleString('bn-BD')} • {reviewCount.toLocaleString('bn-BD')}টি রিভিউ</p>
+          <p className="mt-1 text-sm font-bold text-amber-700 dark:text-amber-300">★ {avg.toLocaleString('bn-BD')} • {reviewCount.toLocaleString('bn-BD')}টি রিভিউ</p>
         )}
         <div className="mt-4 flex items-center justify-between">
           <div>
             {free ? (
-              <span className="text-xl font-bold text-emerald-700">ফ্রি</span>
+              <span className="text-xl font-bold text-emerald-700 dark:text-emerald-300">ফ্রি</span>
             ) : (
               <>
-                <span className="text-xl font-bold text-ink">৳{bn(course.price)}</span>
-                {course.oldPrice && <span className="ml-2 text-sm text-muted line-through">৳{bn(course.oldPrice)}</span>}
+                <span className="text-xl font-bold text-ink dark:text-slate-100">৳{bn(course.price)}</span>
+                {course.oldPrice && <span className="ml-2 text-sm text-muted dark:text-slate-400 line-through">৳{bn(course.oldPrice)}</span>}
               </>
             )}
           </div>
           {enrolled ? (
             <Link to={`/learn/${course.id}/${course.lessons?.[0]?.id || ''}`} className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white">ক্লাস করুন</Link>
           ) : pending ? (
-            <span className="rounded-full bg-amber-100 px-4 py-2 text-sm font-bold text-amber-800">অ্যাপ্রুভের অপেক্ষায়</span>
+            <span className="rounded-full bg-amber-100 dark:bg-amber-900 px-4 py-2 text-sm font-bold text-amber-800 dark:text-amber-200">অ্যাপ্রুভের অপেক্ষায়</span>
           ) : free ? (
             <Link to={`/checkout/${course.id}`} className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700">ফ্রি এনরোল করুন</Link>
           ) : (

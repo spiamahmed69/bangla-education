@@ -4,8 +4,8 @@ import { useStore } from '../lib/store'
 import { CATEGORIES } from '../lib/sampleData'
 import { bn } from '../components/CourseCard'
 
-const inputCls = 'w-full rounded-2xl border border-blue-100 bg-page px-4 py-2.5 focus:border-primary focus:outline-none'
-const labelCls = 'mb-1 block text-sm font-bold text-ink'
+const inputCls = 'w-full rounded-2xl border border-blue-100 dark:border-slate-600 bg-page dark:bg-slate-900 px-4 py-2.5 focus:border-primary focus:outline-none'
+const labelCls = 'mb-1 block text-sm font-bold text-ink dark:text-slate-100'
 
 // ইউটিউব লিংক (পূর্ণ URL) বা ID — যেটাই দেওয়া হোক, ID বের করে নেয়
 export function extractYoutubeId(value) {
@@ -27,7 +27,7 @@ const GRADIENTS = [
 ]
 
 export default function Admin() {
-  const { user, authLoading, courses, orders, enrollments, allUsers, reviews, coupons, settings, decideOrder, saveCourse, deleteCourse, saveSettings, setUserRole, logoutDevice, deleteReview, saveCoupon, deleteCoupon, getQuiz, saveQuiz, deleteQuiz } = useStore()
+  const { user, authLoading, courses, orders, enrollments, allUsers, reviews, coupons, settings, decideOrder, saveCourse, deleteCourse, saveSettings, setUserRole, logoutDevice, deleteReview, saveCoupon, deleteCoupon, getQuiz, saveQuiz, deleteQuiz, liveClasses, saveLiveClass, deleteLiveClass } = useStore()
   const [tab, setTab] = useState('dashboard')
   const [msg, setMsg] = useState('')
 
@@ -44,18 +44,20 @@ export default function Admin() {
   const [quizError, setQuizError] = useState('')
   const [qForm, setQForm] = useState({ q: '', options: ['', '', '', ''], answerIndex: 0 })
   const [qEditIdx, setQEditIdx] = useState(-1)
+  const [liveForm, setLiveForm] = useState(null)
+  const [liveError, setLiveError] = useState('')
 
   if (authLoading) {
     return (
       <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
-        <p className="text-muted">লোড হচ্ছে…</p>
+        <p className="text-muted dark:text-slate-400">লোড হচ্ছে…</p>
       </div>
     )
   }
   if (!user) {
     return (
       <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
-        <h1 className="text-2xl font-bold text-ink">অ্যাডমিন প্যানেল দেখতে লগইন করুন</h1>
+        <h1 className="text-2xl font-bold text-ink dark:text-slate-100">অ্যাডমিন প্যানেল দেখতে লগইন করুন</h1>
         <Link to="/login" className="mt-6 inline-block rounded-full bg-primary px-6 py-3 font-bold text-white">লগইন করুন</Link>
       </div>
     )
@@ -63,8 +65,8 @@ export default function Admin() {
   if (user.role !== 'admin') {
     return (
       <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
-        <h1 className="text-2xl font-bold text-ink">আপনার অ্যাডমিন অনুমতি নেই</h1>
-        <p className="mt-2 text-muted">এই পেজটি শুধু অ্যাডমিনদের জন্য।</p>
+        <h1 className="text-2xl font-bold text-ink dark:text-slate-100">আপনার অ্যাডমিন অনুমতি নেই</h1>
+        <p className="mt-2 text-muted dark:text-slate-400">এই পেজটি শুধু অ্যাডমিনদের জন্য।</p>
         <Link to="/" className="mt-6 inline-block rounded-full bg-primary px-6 py-3 font-bold text-white">হোমে ফিরুন</Link>
       </div>
     )
@@ -89,6 +91,7 @@ export default function Admin() {
     ['reviews', `রিভিউ (${reviews.length}টি)`],
     ['coupons', `কুপন (${coupons.length}টি)`],
     ['quizzes', 'কুইজ'],
+    ['live', `লাইভ ক্লাস (${liveClasses.length}টি)`],
     ['settings', 'সেটিংস'],
   ]
 
@@ -277,14 +280,14 @@ export default function Admin() {
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-10">
-      <h1 className="text-3xl font-bold text-ink">অ্যাডমিন প্যানেল</h1>
-      <p className="mt-1 text-muted">স্বাগতম, {user.name} — বিক্রি, পেমেন্ট, কোর্স আর ইউজার — সব এখান থেকে পরিচালনা করুন।</p>
-      {msg && <p className="mt-4 rounded-2xl bg-emerald-50 p-3 text-sm font-bold text-emerald-800">{msg}</p>}
+      <h1 className="text-3xl font-bold text-ink dark:text-slate-100">অ্যাডমিন প্যানেল</h1>
+      <p className="mt-1 text-muted dark:text-slate-400">স্বাগতম, {user.name} — বিক্রি, পেমেন্ট, কোর্স আর ইউজার — সব এখান থেকে পরিচালনা করুন।</p>
+      {msg && <p className="mt-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950 p-3 text-sm font-bold text-emerald-800 dark:text-emerald-200">{msg}</p>}
 
       <div className="mt-6 flex flex-wrap gap-2">
         {tabs.map(([id, label]) => (
           <button key={id} onClick={() => { setTab(id); setMsg('') }}
-            className={`rounded-full px-4 py-2 text-sm font-bold ${tab === id ? 'bg-primary text-white' : 'bg-white text-ink shadow-sm'}`}>{label}</button>
+            className={`rounded-full px-4 py-2 text-sm font-bold ${tab === id ? 'bg-primary text-white' : 'bg-white dark:bg-slate-800 text-ink dark:text-slate-100 shadow-sm'}`}>{label}</button>
         ))}
       </div>
 
@@ -296,14 +299,14 @@ export default function Admin() {
             ['মোট ইউজার', `${allUsers.length} জন`],
             ['মোট কোর্স', `${courses.length}টি`],
           ].map(([label, value]) => (
-            <div key={label} className="rounded-3xl bg-white p-6 shadow-sm">
-              <p className="text-sm text-muted">{label}</p>
-              <p className="mt-1 text-2xl font-bold text-ink">{value}</p>
+            <div key={label} className="rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-sm">
+              <p className="text-sm text-muted dark:text-slate-400">{label}</p>
+              <p className="mt-1 text-2xl font-bold text-ink dark:text-slate-100">{value}</p>
             </div>
           ))}
-          <div className="rounded-3xl bg-white p-6 shadow-sm sm:col-span-4">
-            <h2 className="font-bold text-ink">সাম্প্রতিক পেমেন্ট</h2>
-            {orders.length === 0 ? <p className="mt-2 text-sm text-muted">এখনো কোনো পেমেন্ট জমা পড়েনি।</p> : (
+          <div className="rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-sm sm:col-span-4">
+            <h2 className="font-bold text-ink dark:text-slate-100">সাম্প্রতিক পেমেন্ট</h2>
+            {orders.length === 0 ? <p className="mt-2 text-sm text-muted dark:text-slate-400">এখনো কোনো পেমেন্ট জমা পড়েনি।</p> : (
               <ul className="mt-3 space-y-2 text-sm">
                 {orders.slice(0, 5).map(o => (
                   <li key={o.id} className="flex flex-wrap justify-between gap-2 border-b border-slate-100 pb-2">
@@ -326,24 +329,24 @@ export default function Admin() {
               ['অপেক্ষমাণ পেমেন্ট', `${pendingOrders.length}টি`],
               ['বাতিল অর্ডার', `${rejectedOrders.length}টি`],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-3xl bg-white p-6 shadow-sm">
-                <p className="text-sm text-muted">{label}</p>
-                <p className="mt-1 text-2xl font-bold text-ink">{value}</p>
+              <div key={label} className="rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-sm">
+                <p className="text-sm text-muted dark:text-slate-400">{label}</p>
+                <p className="mt-1 text-2xl font-bold text-ink dark:text-slate-100">{value}</p>
               </div>
             ))}
           </div>
 
-          <div className="rounded-3xl bg-white p-6 shadow-sm">
+          <div className="rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-bold text-ink">কোর্স অনুযায়ী বিক্রি</h2>
+              <h2 className="font-bold text-ink dark:text-slate-100">কোর্স অনুযায়ী বিক্রি</h2>
               <button onClick={downloadOrdersCsv} className="rounded-full bg-primary px-5 py-2.5 font-bold text-white">⬇ CSV ডাউনলোড (সব অর্ডার)</button>
             </div>
             {reportPerCourse.length === 0 ? (
-              <p className="mt-3 text-sm text-muted">এখনো কোনো অর্ডার জমা পড়েনি।</p>
+              <p className="mt-3 text-sm text-muted dark:text-slate-400">এখনো কোনো অর্ডার জমা পড়েনি।</p>
             ) : (
               <table className="mt-4 w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b text-muted">
+                  <tr className="border-b text-muted dark:text-slate-400">
                     <th className="py-2 pr-2">কোর্স</th>
                     <th className="py-2 pr-2">অর্ডার</th>
                     <th className="py-2 pr-2">অ্যাপ্রুভ</th>
@@ -353,10 +356,10 @@ export default function Admin() {
                 <tbody>
                   {reportPerCourse.map(r => (
                     <tr key={r.id} className="border-b border-slate-100">
-                      <td className="py-2 pr-2 font-bold text-ink">{r.title}</td>
+                      <td className="py-2 pr-2 font-bold text-ink dark:text-slate-100">{r.title}</td>
                       <td className="py-2 pr-2">{bn(r.orders)}টি</td>
                       <td className="py-2 pr-2">{bn(r.approved)}টি</td>
-                      <td className="py-2 font-bold text-ink">৳{bn(r.revenue)}</td>
+                      <td className="py-2 font-bold text-ink dark:text-slate-100">৳{bn(r.revenue)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -364,14 +367,14 @@ export default function Admin() {
             )}
           </div>
 
-          <div className="rounded-3xl bg-white p-6 shadow-sm">
-            <h2 className="font-bold text-ink">মাস অনুযায়ী বিক্রি</h2>
+          <div className="rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-sm">
+            <h2 className="font-bold text-ink dark:text-slate-100">মাস অনুযায়ী বিক্রি</h2>
             {reportPerMonth.length === 0 ? (
-              <p className="mt-3 text-sm text-muted">এখনো কোনো অর্ডার জমা পড়েনি।</p>
+              <p className="mt-3 text-sm text-muted dark:text-slate-400">এখনো কোনো অর্ডার জমা পড়েনি।</p>
             ) : (
               <table className="mt-4 w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b text-muted">
+                  <tr className="border-b text-muted dark:text-slate-400">
                     <th className="py-2 pr-2">মাস</th>
                     <th className="py-2 pr-2">অর্ডার</th>
                     <th className="py-2">বিক্রি (অ্যাপ্রুভ)</th>
@@ -380,9 +383,9 @@ export default function Admin() {
                 <tbody>
                   {reportPerMonth.map(m => (
                     <tr key={m.key} className="border-b border-slate-100">
-                      <td className="py-2 pr-2 font-bold text-ink">{m.label}</td>
+                      <td className="py-2 pr-2 font-bold text-ink dark:text-slate-100">{m.label}</td>
                       <td className="py-2 pr-2">{bn(m.orders)}টি</td>
-                      <td className="py-2 font-bold text-ink">৳{bn(m.revenue)}</td>
+                      <td className="py-2 font-bold text-ink dark:text-slate-100">৳{bn(m.revenue)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -394,15 +397,15 @@ export default function Admin() {
 
       {tab === 'orders' && (
         <div className="mt-6 space-y-3">
-          {orders.length === 0 && <p className="rounded-3xl bg-white p-8 text-center text-muted shadow-sm">কোনো পেমেন্ট জমা পড়েনি।</p>}
+          {orders.length === 0 && <p className="rounded-3xl bg-white dark:bg-slate-800 p-8 text-center text-muted dark:text-slate-400 shadow-sm">কোনো পেমেন্ট জমা পড়েনি।</p>}
           {orders.map(o => (
-            <div key={o.id} className="rounded-3xl bg-white p-5 shadow-sm">
+            <div key={o.id} className="rounded-3xl bg-white dark:bg-slate-800 p-5 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-bold text-ink">{o.courseTitle} — ৳{bn(o.price)}{o.originalPrice && o.originalPrice !== o.price ? <span className="text-muted line-through"> ৳{bn(o.originalPrice)}</span> : ''}</p>
-                  <p className="text-sm text-muted">{o.userEmail} • {o.method === 'bkash' ? 'বিকাশ' : 'নগদ'} • প্রেরক: {o.senderNumber} • ট্রানজাকশন: {o.txnId}{o.couponCode ? ` • কুপন: ${o.couponCode} (-৳${bn(o.couponDiscount || 0)})` : ''}</p>
+                  <p className="font-bold text-ink dark:text-slate-100">{o.courseTitle} — ৳{bn(o.price)}{o.originalPrice && o.originalPrice !== o.price ? <span className="text-muted dark:text-slate-400 line-through"> ৳{bn(o.originalPrice)}</span> : ''}</p>
+                  <p className="text-sm text-muted dark:text-slate-400">{o.userEmail} • {o.method === 'bkash' ? 'বিকাশ' : 'নগদ'} • প্রেরক: {o.senderNumber} • ট্রানজাকশন: {o.txnId}{o.couponCode ? ` • কুপন: ${o.couponCode} (-৳${bn(o.couponDiscount || 0)})` : ''}</p>
                 </div>
-                <span className={`rounded-full px-4 py-1.5 text-sm font-bold ${o.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : o.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>
+                <span className={`rounded-full px-4 py-1.5 text-sm font-bold ${o.status === 'approved' ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200' : o.status === 'rejected' ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' : 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200'}`}>
                   {o.status === 'approved' ? 'অ্যাপ্রুভ হয়েছে' : o.status === 'rejected' ? 'বাতিল' : 'অপেক্ষমাণ'}
                 </span>
               </div>
@@ -421,8 +424,8 @@ export default function Admin() {
         <div className="mt-6">
           <button onClick={() => startCourseForm(null)} className="rounded-full bg-primary px-5 py-2.5 font-bold text-white">+ নতুন কোর্স</button>
           {courseForm && (
-            <form onSubmit={saveCourseForm} className="mt-4 space-y-4 rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="font-bold text-ink">{courseForm.id ? 'কোর্স সম্পাদনা' : 'নতুন কোর্স'}</h2>
+            <form onSubmit={saveCourseForm} className="mt-4 space-y-4 rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-sm">
+              <h2 className="font-bold text-ink dark:text-slate-100">{courseForm.id ? 'কোর্স সম্পাদনা' : 'নতুন কোর্স'}</h2>
               <div><label className={labelCls}>কোর্সের নাম</label><input required className={inputCls} value={courseForm.title} onChange={e => setCourseForm({ ...courseForm, title: e.target.value })} /></div>
               <div className="grid gap-4 sm:grid-cols-3">
                 <div><label className={labelCls}>ক্যাটাগরি</label>
@@ -443,7 +446,7 @@ export default function Admin() {
                     <option key={t.uid} value={t.uid}>{t.name} ({t.email})</option>
                   ))}
                 </select>
-                <p className="mt-1 text-xs text-muted">শিক্ষক বেছে নিলে তিনি শিক্ষক প্যানেলে এই কোর্সটি দেখতে পারবেন। শিক্ষক বানাতে ইউজার ট্যাব থেকে কাউকে “শিক্ষক করুন” চাপুন।</p>
+                <p className="mt-1 text-xs text-muted dark:text-slate-400">শিক্ষক বেছে নিলে তিনি শিক্ষক প্যানেলে এই কোর্সটি দেখতে পারবেন। শিক্ষক বানাতে ইউজার ট্যাব থেকে কাউকে “শিক্ষক করুন” চাপুন।</p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div><label className={labelCls}>দাম (৳) — ০ দিলে কোর্সটি ফ্রি হবে</label><input type="number" min="0" className={inputCls} value={courseForm.price} onChange={e => setCourseForm({ ...courseForm, price: e.target.value })} /></div>
@@ -462,24 +465,24 @@ export default function Admin() {
                 </div>
                 {uploadError && <p className="mt-2 text-sm font-bold text-red-600">{uploadError}</p>}
                 <input className={`${inputCls} mt-3`} value={courseForm.imageUrl || ''} onChange={e => setCourseForm({ ...courseForm, imageUrl: e.target.value })} placeholder="অথবা ছবির লিংক দিন (https://…)" />
-                <p className="mt-1 text-xs text-muted">খালি থাকলে ডিজাইন করা কভার দেখাবে।</p>
+                <p className="mt-1 text-xs text-muted dark:text-slate-400">খালি থাকলে ডিজাইন করা কভার দেখাবে।</p>
               </div>
               <div className="flex gap-3">
                 <button className="rounded-full bg-primary px-6 py-2.5 font-bold text-white">সংরক্ষণ</button>
-                <button type="button" onClick={() => setCourseForm(null)} className="rounded-full bg-slate-100 px-6 py-2.5 font-bold text-ink">বাতিল</button>
+                <button type="button" onClick={() => setCourseForm(null)} className="rounded-full bg-slate-100 dark:bg-slate-700 px-6 py-2.5 font-bold text-ink dark:text-slate-100">বাতিল</button>
               </div>
             </form>
           )}
           <div className="mt-4 space-y-3">
             {courses.map(c => (
-              <div key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-white p-5 shadow-sm">
+              <div key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-white dark:bg-slate-800 p-5 shadow-sm">
                 <div>
-                  <p className="font-bold text-ink">{c.title}</p>
-                  <p className="text-sm text-muted">৳{bn(c.price)} • {c.lessons?.length || 0}টি ক্লাস • {c.teacher}</p>
+                  <p className="font-bold text-ink dark:text-slate-100">{c.title}</p>
+                  <p className="text-sm text-muted dark:text-slate-400">৳{bn(c.price)} • {c.lessons?.length || 0}টি ক্লাস • {c.teacher}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => startCourseForm(c)} className="rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-primary">সম্পাদনা</button>
-                  <button onClick={() => { if (confirm(`“${c.title}” মুছে ফেলবেন?`)) { deleteCourse(c.id); setMsg('কোর্স মুছে ফেলা হয়েছে।') } }} className="rounded-full bg-red-50 px-4 py-2 text-sm font-bold text-red-700">মুছুন</button>
+                  <button onClick={() => startCourseForm(c)} className="rounded-full bg-blue-50 dark:bg-slate-700 px-4 py-2 text-sm font-bold text-primary">সম্পাদনা</button>
+                  <button onClick={() => { if (confirm(`“${c.title}” মুছে ফেলবেন?`)) { deleteCourse(c.id); setMsg('কোর্স মুছে ফেলা হয়েছে।') } }} className="rounded-full bg-red-50 dark:bg-red-950 px-4 py-2 text-sm font-bold text-red-700 dark:text-red-300">মুছুন</button>
                 </div>
               </div>
             ))}
@@ -497,40 +500,40 @@ export default function Admin() {
             <>
               <button onClick={() => startLessonForm(null)} className="mt-4 rounded-full bg-primary px-5 py-2.5 font-bold text-white">+ নতুন ক্লাস</button>
               {lessonForm && (
-                <form onSubmit={saveLessonForm} className="mt-4 space-y-4 rounded-3xl bg-white p-6 shadow-sm">
-                  <h2 className="font-bold text-ink">{lessonForm.id && (lessonCourse.lessons || []).some(l => l.id === lessonForm.id) ? 'ক্লাস সম্পাদনা' : 'নতুন ক্লাস'} — {lessonCourse.title}</h2>
+                <form onSubmit={saveLessonForm} className="mt-4 space-y-4 rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-sm">
+                  <h2 className="font-bold text-ink dark:text-slate-100">{lessonForm.id && (lessonCourse.lessons || []).some(l => l.id === lessonForm.id) ? 'ক্লাস সম্পাদনা' : 'নতুন ক্লাস'} — {lessonCourse.title}</h2>
                   <div><label className={labelCls}>ক্লাসের নাম</label><input required className={inputCls} value={lessonForm.title} onChange={e => setLessonForm({ ...lessonForm, title: e.target.value })} placeholder="যেমন: বহিপীর" /></div>
                   <div><label className={labelCls}>সময়কাল</label><input className={inputCls} value={lessonForm.duration} onChange={e => setLessonForm({ ...lessonForm, duration: e.target.value })} placeholder="যেমন: ৩০ মিনিট" /></div>
                   <div><label className={labelCls}>ইউটিউব লিংক (পূর্ণ URL বা ভিডিও ID)</label><input className={inputCls} value={lessonForm.youtubeId} onChange={e => setLessonForm({ ...lessonForm, youtubeId: e.target.value })} placeholder="https://www.youtube.com/watch?v=…" /></div>
-                  <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-emerald-50 p-4">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950 p-4">
                     <input type="checkbox" checked={!!lessonForm.isFree} onChange={e => setLessonForm({ ...lessonForm, isFree: e.target.checked })} className="mt-1 h-5 w-5 shrink-0 accent-emerald-600" />
                     <span>
-                      <span className="block font-bold text-ink">ফ্রি ডেমো ক্লাস হিসেবে দেখান (লগইন ছাড়াই সবাই দেখতে পারবে)</span>
-                      <span className="mt-1 block text-sm text-muted">শুধু এই ক্লাসের ভিডিওটাই সবার জন্য খুলে যাবে — কোর্সের বাকি ক্লাসগুলো কেনা ছাড়া লকই থাকবে। ফ্রি করতে হলে ওপরে ইউটিউব লিংক বসানো থাকতে হবে।</span>
+                      <span className="block font-bold text-ink dark:text-slate-100">ফ্রি ডেমো ক্লাস হিসেবে দেখান (লগইন ছাড়াই সবাই দেখতে পারবে)</span>
+                      <span className="mt-1 block text-sm text-muted dark:text-slate-400">শুধু এই ক্লাসের ভিডিওটাই সবার জন্য খুলে যাবে — কোর্সের বাকি ক্লাসগুলো কেনা ছাড়া লকই থাকবে। ফ্রি করতে হলে ওপরে ইউটিউব লিংক বসানো থাকতে হবে।</span>
                     </span>
                   </label>
                   <div><label className={labelCls}>নোটের PDF লিংক (আপলোড নয়, শুধু লিংক)</label><input className={inputCls} value={lessonForm.pdfUrl} onChange={e => setLessonForm({ ...lessonForm, pdfUrl: e.target.value })} placeholder="https://…" /></div>
                   <div><label className={labelCls}>প্র্যাকটিস সেটের PDF লিংক (ঐচ্ছিক)</label><input className={inputCls} value={lessonForm.pdfUrl2 || ''} onChange={e => setLessonForm({ ...lessonForm, pdfUrl2: e.target.value })} placeholder="https://…" /></div>
                   <div className="flex gap-3">
                     <button className="rounded-full bg-primary px-6 py-2.5 font-bold text-white">সংরক্ষণ</button>
-                    <button type="button" onClick={() => setLessonForm(null)} className="rounded-full bg-slate-100 px-6 py-2.5 font-bold text-ink">বাতিল</button>
+                    <button type="button" onClick={() => setLessonForm(null)} className="rounded-full bg-slate-100 dark:bg-slate-700 px-6 py-2.5 font-bold text-ink dark:text-slate-100">বাতিল</button>
                   </div>
                 </form>
               )}
               <div className="mt-4 space-y-3">
                 {(lessonCourse.lessons || []).map((l, i) => (
-                  <div key={l.id} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-white p-5 shadow-sm">
+                  <div key={l.id} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-white dark:bg-slate-800 p-5 shadow-sm">
                     <div>
-                      <p className="font-bold text-ink">{i + 1}. {l.title} {l.isFree && <span className="ml-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800">ফ্রি ডেমো</span>}</p>
-                      <p className="text-sm text-muted">{l.duration} • ভিডিও: {l.youtubeId ? 'যুক্ত আছে' : 'লিংক বসানো হয়নি'} • PDF: {l.pdfUrl ? 'যুক্ত আছে' : 'লিংক বসানো হয়নি'}</p>
+                      <p className="font-bold text-ink dark:text-slate-100">{i + 1}. {l.title} {l.isFree && <span className="ml-1 rounded-full bg-emerald-100 dark:bg-emerald-900 px-2 py-0.5 text-xs font-bold text-emerald-800 dark:text-emerald-200">ফ্রি ডেমো</span>}</p>
+                      <p className="text-sm text-muted dark:text-slate-400">{l.duration} • ভিডিও: {l.youtubeId ? 'যুক্ত আছে' : 'লিংক বসানো হয়নি'} • PDF: {l.pdfUrl ? 'যুক্ত আছে' : 'লিংক বসানো হয়নি'}</p>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => startLessonForm(l)} className="rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-primary">সম্পাদনা</button>
-                      <button onClick={() => deleteLesson(l.id)} className="rounded-full bg-red-50 px-4 py-2 text-sm font-bold text-red-700">মুছুন</button>
+                      <button onClick={() => startLessonForm(l)} className="rounded-full bg-blue-50 dark:bg-slate-700 px-4 py-2 text-sm font-bold text-primary">সম্পাদনা</button>
+                      <button onClick={() => deleteLesson(l.id)} className="rounded-full bg-red-50 dark:bg-red-950 px-4 py-2 text-sm font-bold text-red-700 dark:text-red-300">মুছুন</button>
                     </div>
                   </div>
                 ))}
-                {(lessonCourse.lessons || []).length === 0 && <p className="rounded-3xl bg-white p-8 text-center text-muted shadow-sm">এই কোর্সে এখনো কোনো ক্লাস নেই।</p>}
+                {(lessonCourse.lessons || []).length === 0 && <p className="rounded-3xl bg-white dark:bg-slate-800 p-8 text-center text-muted dark:text-slate-400 shadow-sm">এই কোর্সে এখনো কোনো ক্লাস নেই।</p>}
               </div>
             </>
           )}
@@ -540,58 +543,58 @@ export default function Admin() {
       {tab === 'users' && (
         <div className="mt-6 space-y-3">
           {allUsers.map(u => (
-            <div key={u.uid} className="rounded-3xl bg-white p-5 shadow-sm">
+            <div key={u.uid} className="rounded-3xl bg-white dark:bg-slate-800 p-5 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-bold text-ink">{u.name} <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-primary">{u.role === 'admin' ? 'অ্যাডমিন' : u.role === 'teacher' ? 'শিক্ষক' : 'শিক্ষার্থী'}</span></p>
-                  <p className="text-sm text-muted">{u.email}</p>
-                  <p className="text-sm text-muted">কেনা কোর্স: {(enrolledCourseIds[u.uid] || []).length}টি • লগইন করা ডিভাইস: {(u.devices || []).length}টি (সর্বোচ্চ ২টি)</p>
+                  <p className="font-bold text-ink dark:text-slate-100">{u.name} <span className="ml-2 rounded-full bg-blue-50 dark:bg-slate-700 px-2 py-0.5 text-xs font-bold text-primary">{u.role === 'admin' ? 'অ্যাডমিন' : u.role === 'teacher' ? 'শিক্ষক' : 'শিক্ষার্থী'}</span></p>
+                  <p className="text-sm text-muted dark:text-slate-400">{u.email}</p>
+                  <p className="text-sm text-muted dark:text-slate-400">কেনা কোর্স: {(enrolledCourseIds[u.uid] || []).length}টি • লগইন করা ডিভাইস: {(u.devices || []).length}টি (সর্বোচ্চ ২টি)</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {u.role !== 'admin' && (
-                    <button onClick={() => { setUserRole(u.uid, 'admin'); setMsg(`${u.email} কে অ্যাডমিন করা হয়েছে।`) }} className="rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-primary">অ্যাডমিন করুন</button>
+                    <button onClick={() => { setUserRole(u.uid, 'admin'); setMsg(`${u.email} কে অ্যাডমিন করা হয়েছে।`) }} className="rounded-full bg-blue-50 dark:bg-slate-700 px-4 py-2 text-sm font-bold text-primary">অ্যাডমিন করুন</button>
                   )}
                   {u.role !== 'teacher' && (
-                    <button onClick={() => { setUserRole(u.uid, 'teacher'); setMsg(`${u.email} কে শিক্ষক করা হয়েছে।`) }} className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-800">শিক্ষক করুন</button>
+                    <button onClick={() => { setUserRole(u.uid, 'teacher'); setMsg(`${u.email} কে শিক্ষক করা হয়েছে।`) }} className="rounded-full bg-emerald-50 dark:bg-emerald-950 px-4 py-2 text-sm font-bold text-emerald-800 dark:text-emerald-200">শিক্ষক করুন</button>
                   )}
                   {u.role === 'teacher' && (
-                    <button onClick={() => { setUserRole(u.uid, 'student'); setMsg(`${u.email} কে শিক্ষার্থী করা হয়েছে।`) }} className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-ink">শিক্ষক সরান</button>
+                    <button onClick={() => { setUserRole(u.uid, 'student'); setMsg(`${u.email} কে শিক্ষার্থী করা হয়েছে।`) }} className="rounded-full bg-slate-100 dark:bg-slate-700 px-4 py-2 text-sm font-bold text-ink dark:text-slate-100">শিক্ষক সরান</button>
                   )}
                   {u.role === 'admin' && u.uid !== user.uid && (
-                    <button onClick={() => { setUserRole(u.uid, 'student'); setMsg(`${u.email} কে শিক্ষার্থী করা হয়েছে।`) }} className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-ink">অ্যাডমিন সরান</button>
+                    <button onClick={() => { setUserRole(u.uid, 'student'); setMsg(`${u.email} কে শিক্ষার্থী করা হয়েছে।`) }} className="rounded-full bg-slate-100 dark:bg-slate-700 px-4 py-2 text-sm font-bold text-ink dark:text-slate-100">অ্যাডমিন সরান</button>
                   )}
                 </div>
               </div>
               {(u.devices || []).length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {u.devices.map((d, i) => (
-                    <span key={d} className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-muted">
+                    <span key={d} className="flex items-center gap-2 rounded-full bg-slate-100 dark:bg-slate-700 px-3 py-1 text-xs font-semibold text-muted dark:text-slate-400">
                       ডিভাইস {i + 1}: {String(d).slice(0, 8)}…
-                      <button onClick={() => { logoutDevice(u.uid, d); setMsg('ডিভাইস থেকে লগআউট করানো হয়েছে।') }} className="font-bold text-red-700">লগআউট করান</button>
+                      <button onClick={() => { logoutDevice(u.uid, d); setMsg('ডিভাইস থেকে লগআউট করানো হয়েছে।') }} className="font-bold text-red-700 dark:text-red-300">লগআউট করান</button>
                     </span>
                   ))}
                 </div>
               )}
             </div>
           ))}
-          {allUsers.length === 0 && <p className="rounded-3xl bg-white p-8 text-center text-muted shadow-sm">এখনো কোনো ইউজার নেই।</p>}
+          {allUsers.length === 0 && <p className="rounded-3xl bg-white dark:bg-slate-800 p-8 text-center text-muted dark:text-slate-400 shadow-sm">এখনো কোনো ইউজার নেই।</p>}
         </div>
       )}
 
       {tab === 'reviews' && (
         <div className="mt-6 space-y-3">
-          {reviews.length === 0 && <p className="rounded-3xl bg-white p-8 text-center text-muted shadow-sm">এখনো কোনো রিভিউ জমা পড়েনি।</p>}
+          {reviews.length === 0 && <p className="rounded-3xl bg-white dark:bg-slate-800 p-8 text-center text-muted dark:text-slate-400 shadow-sm">এখনো কোনো রিভিউ জমা পড়েনি।</p>}
           {reviews.map(r => {
             const c = courses.find(x => x.id === r.courseId)
             return (
-              <div key={r.id} className="rounded-3xl bg-white p-5 shadow-sm">
+              <div key={r.id} className="rounded-3xl bg-white dark:bg-slate-800 p-5 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-bold text-ink">{c?.title || r.courseId} — <span className="text-amber-600">{'★'.repeat(Math.round(r.rating || 0))}{'☆'.repeat(5 - Math.round(r.rating || 0))}</span></p>
-                    <p className="text-sm text-muted">{r.userName} • {r.createdAt ? new Date(r.createdAt).toLocaleDateString('bn-BD') : ''}</p>
-                    {r.text && <p className="mt-2 text-sm text-ink">{r.text}</p>}
+                    <p className="font-bold text-ink dark:text-slate-100">{c?.title || r.courseId} — <span className="text-amber-600">{'★'.repeat(Math.round(r.rating || 0))}{'☆'.repeat(5 - Math.round(r.rating || 0))}</span></p>
+                    <p className="text-sm text-muted dark:text-slate-400">{r.userName} • {r.createdAt ? new Date(r.createdAt).toLocaleDateString('bn-BD') : ''}</p>
+                    {r.text && <p className="mt-2 text-sm text-ink dark:text-slate-100">{r.text}</p>}
                   </div>
-                  <button onClick={async () => { if (confirm('এই রিভিউটি মুছে ফেলবেন?')) { await deleteReview(r.id); setMsg('রিভিউ মুছে ফেলা হয়েছে।') } }} className="rounded-full bg-red-50 px-4 py-2 text-sm font-bold text-red-700">মুছুন</button>
+                  <button onClick={async () => { if (confirm('এই রিভিউটি মুছে ফেলবেন?')) { await deleteReview(r.id); setMsg('রিভিউ মুছে ফেলা হয়েছে।') } }} className="rounded-full bg-red-50 dark:bg-red-950 px-4 py-2 text-sm font-bold text-red-700 dark:text-red-300">মুছুন</button>
                 </div>
               </div>
             )
@@ -602,11 +605,11 @@ export default function Admin() {
       {tab === 'coupons' && (
         <div className="mt-6">
           <button onClick={() => startCouponForm(null)} className="rounded-full bg-primary px-5 py-2.5 font-bold text-white">+ নতুন কুপন</button>
-          <p className="mt-3 text-sm text-muted">কুপন কোড চেকআউটে লিখলেই ছাড় প্রযোজ্য হবে। এখনো কোনো কুপন বানানো হয়নি — অ্যাডমিন এখান থেকে প্রথম কুপন বানাতে পারবে।</p>
+          <p className="mt-3 text-sm text-muted dark:text-slate-400">কুপন কোড চেকআউটে লিখলেই ছাড় প্রযোজ্য হবে। এখনো কোনো কুপন বানানো হয়নি — অ্যাডমিন এখান থেকে প্রথম কুপন বানাতে পারবে।</p>
           {couponForm && (
-            <form onSubmit={saveCouponForm} className="mt-4 space-y-4 rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="font-bold text-ink">{couponForm.code && coupons.some(c => c.code === couponForm.code) ? 'কুপন সম্পাদনা' : 'নতুন কুপন'}</h2>
-              <div><label className={labelCls}>কুপন কোড (ইংরেজি অক্ষর ও সংখ্যা)</label><input required disabled={!!couponForm.createdAt} className={`${inputCls} uppercase disabled:opacity-60`} value={couponForm.code} onChange={e => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })} placeholder="যেমন: SP10" />{couponForm.createdAt && <p className="mt-1 text-xs text-muted">কোড বদলাতে হলে এই কুপনটি মুছে নতুন করে বানান।</p>}</div>
+            <form onSubmit={saveCouponForm} className="mt-4 space-y-4 rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-sm">
+              <h2 className="font-bold text-ink dark:text-slate-100">{couponForm.code && coupons.some(c => c.code === couponForm.code) ? 'কুপন সম্পাদনা' : 'নতুন কুপন'}</h2>
+              <div><label className={labelCls}>কুপন কোড (ইংরেজি অক্ষর ও সংখ্যা)</label><input required disabled={!!couponForm.createdAt} className={`${inputCls} uppercase disabled:opacity-60`} value={couponForm.code} onChange={e => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })} placeholder="যেমন: SP10" />{couponForm.createdAt && <p className="mt-1 text-xs text-muted dark:text-slate-400">কোড বদলাতে হলে এই কুপনটি মুছে নতুন করে বানান।</p>}</div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div><label className={labelCls}>ছাড়ের ধরন</label>
                   <select className={inputCls} value={couponForm.discountType} onChange={e => setCouponForm({ ...couponForm, discountType: e.target.value })}>
@@ -617,30 +620,30 @@ export default function Admin() {
               </div>
               <label className="flex cursor-pointer items-center gap-3">
                 <input type="checkbox" checked={couponForm.active !== false} onChange={e => setCouponForm({ ...couponForm, active: e.target.checked })} className="h-5 w-5 accent-emerald-600" />
-                <span className="font-bold text-ink">কুপনটি সক্রিয় (বন্ধ থাকলে চেকআউটে কাজ করবে না)</span>
+                <span className="font-bold text-ink dark:text-slate-100">কুপনটি সক্রিয় (বন্ধ থাকলে চেকআউটে কাজ করবে না)</span>
               </label>
-              {couponError && <p className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{couponError}</p>}
+              {couponError && <p className="rounded-2xl bg-red-50 dark:bg-red-950 p-3 text-sm font-semibold text-red-700 dark:text-red-300">{couponError}</p>}
               <div className="flex gap-3">
                 <button className="rounded-full bg-primary px-6 py-2.5 font-bold text-white">সংরক্ষণ</button>
-                <button type="button" onClick={() => setCouponForm(null)} className="rounded-full bg-slate-100 px-6 py-2.5 font-bold text-ink">বাতিল</button>
+                <button type="button" onClick={() => setCouponForm(null)} className="rounded-full bg-slate-100 dark:bg-slate-700 px-6 py-2.5 font-bold text-ink dark:text-slate-100">বাতিল</button>
               </div>
             </form>
           )}
           <div className="mt-4 space-y-3">
             {coupons.map(c => (
-              <div key={c.code} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-white p-5 shadow-sm">
+              <div key={c.code} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-white dark:bg-slate-800 p-5 shadow-sm">
                 <div>
-                  <p className="font-bold text-ink">{c.code} <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-bold ${c.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-muted'}`}>{c.active ? 'সক্রিয়' : 'বন্ধ'}</span></p>
-                  <p className="text-sm text-muted">{couponLabel(c)}</p>
+                  <p className="font-bold text-ink dark:text-slate-100">{c.code} <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-bold ${c.active ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200' : 'bg-slate-100 dark:bg-slate-700 text-muted dark:text-slate-400'}`}>{c.active ? 'সক্রিয়' : 'বন্ধ'}</span></p>
+                  <p className="text-sm text-muted dark:text-slate-400">{couponLabel(c)}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={async () => { await saveCoupon({ ...c, active: !c.active }); setMsg(`কুপন “${c.code}” ${c.active ? 'বন্ধ' : 'সক্রিয়'} করা হয়েছে।`) }} className="rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-primary">{c.active ? 'বন্ধ করুন' : 'সক্রিয় করুন'}</button>
-                  <button onClick={() => startCouponForm(c)} className="rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-primary">সম্পাদনা</button>
-                  <button onClick={() => { if (confirm(`কুপন “${c.code}” মুছে ফেলবেন?`)) { deleteCoupon(c.code); setMsg('কুপন মুছে ফেলা হয়েছে।') } }} className="rounded-full bg-red-50 px-4 py-2 text-sm font-bold text-red-700">মুছুন</button>
+                  <button onClick={async () => { await saveCoupon({ ...c, active: !c.active }); setMsg(`কুপন “${c.code}” ${c.active ? 'বন্ধ' : 'সক্রিয়'} করা হয়েছে।`) }} className="rounded-full bg-blue-50 dark:bg-slate-700 px-4 py-2 text-sm font-bold text-primary">{c.active ? 'বন্ধ করুন' : 'সক্রিয় করুন'}</button>
+                  <button onClick={() => startCouponForm(c)} className="rounded-full bg-blue-50 dark:bg-slate-700 px-4 py-2 text-sm font-bold text-primary">সম্পাদনা</button>
+                  <button onClick={() => { if (confirm(`কুপন “${c.code}” মুছে ফেলবেন?`)) { deleteCoupon(c.code); setMsg('কুপন মুছে ফেলা হয়েছে।') } }} className="rounded-full bg-red-50 dark:bg-red-950 px-4 py-2 text-sm font-bold text-red-700 dark:text-red-300">মুছুন</button>
                 </div>
               </div>
             ))}
-            {coupons.length === 0 && <p className="rounded-3xl bg-white p-8 text-center text-muted shadow-sm">এখনো কোনো কুপন বানানো হয়নি।</p>}
+            {coupons.length === 0 && <p className="rounded-3xl bg-white dark:bg-slate-800 p-8 text-center text-muted dark:text-slate-400 shadow-sm">এখনো কোনো কুপন বানানো হয়নি।</p>}
           </div>
         </div>
       )}
@@ -654,48 +657,48 @@ export default function Admin() {
           </select>
           {quizCourseId && quizQuestions !== null && (
             <>
-              <p className="mt-3 text-sm text-muted">এই কোর্সের কুইজ শুধু কোর্স কেনা শিক্ষার্থীরাই দিতে পারবে। প্রশ্ন যোগ/সম্পাদনা/মোছা সাথে সাথে সংরক্ষণ হয়।</p>
-              <form onSubmit={saveQForm} className="mt-4 space-y-4 rounded-3xl bg-white p-6 shadow-sm">
-                <h2 className="font-bold text-ink">{qEditIdx >= 0 ? 'প্রশ্ন সম্পাদনা' : 'নতুন প্রশ্ন'}</h2>
+              <p className="mt-3 text-sm text-muted dark:text-slate-400">এই কোর্সের কুইজ শুধু কোর্স কেনা শিক্ষার্থীরাই দিতে পারবে। প্রশ্ন যোগ/সম্পাদনা/মোছা সাথে সাথে সংরক্ষণ হয়।</p>
+              <form onSubmit={saveQForm} className="mt-4 space-y-4 rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-sm">
+                <h2 className="font-bold text-ink dark:text-slate-100">{qEditIdx >= 0 ? 'প্রশ্ন সম্পাদনা' : 'নতুন প্রশ্ন'}</h2>
                 <div><label className={labelCls}>প্রশ্ন</label><textarea rows="2" required className={inputCls} value={qForm.q} onChange={e => setQForm({ ...qForm, q: e.target.value })} placeholder="যেমন: বহিপীর নাটকের রচয়িতা কে?" /></div>
                 {qForm.options.map((opt, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <label className="flex shrink-0 cursor-pointer items-center gap-1 text-sm font-bold text-ink">
+                    <label className="flex shrink-0 cursor-pointer items-center gap-1 text-sm font-bold text-ink dark:text-slate-100">
                       <input type="radio" name="q-answer" checked={qForm.answerIndex === i} onChange={() => setQForm({ ...qForm, answerIndex: i })} className="h-4 w-4 accent-emerald-600" />
                       সঠিক
                     </label>
                     <input required className={inputCls} value={opt} onChange={e => setQForm({ ...qForm, options: qForm.options.map((o, j) => j === i ? e.target.value : o) })} placeholder={`অপশন ${i + 1}`} />
                   </div>
                 ))}
-                <p className="text-xs text-muted">“সঠিক” টিক দেওয়া অপশনটিই সঠিক উত্তর হিসেবে ধরা হবে।</p>
-                {quizError && <p className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{quizError}</p>}
+                <p className="text-xs text-muted dark:text-slate-400">“সঠিক” টিক দেওয়া অপশনটিই সঠিক উত্তর হিসেবে ধরা হবে।</p>
+                {quizError && <p className="rounded-2xl bg-red-50 dark:bg-red-950 p-3 text-sm font-semibold text-red-700 dark:text-red-300">{quizError}</p>}
                 <div className="flex gap-3">
                   <button className="rounded-full bg-primary px-6 py-2.5 font-bold text-white">{qEditIdx >= 0 ? 'প্রশ্ন আপডেট করুন' : 'প্রশ্ন যোগ করুন'}</button>
-                  {qEditIdx >= 0 && <button type="button" onClick={() => { setQForm({ q: '', options: ['', '', '', ''], answerIndex: 0 }); setQEditIdx(-1) }} className="rounded-full bg-slate-100 px-6 py-2.5 font-bold text-ink">বাতিল</button>}
+                  {qEditIdx >= 0 && <button type="button" onClick={() => { setQForm({ q: '', options: ['', '', '', ''], answerIndex: 0 }); setQEditIdx(-1) }} className="rounded-full bg-slate-100 dark:bg-slate-700 px-6 py-2.5 font-bold text-ink dark:text-slate-100">বাতিল</button>}
                 </div>
               </form>
               <div className="mt-4 space-y-3">
                 {quizQuestions.map((q, i) => (
-                  <div key={i} className="rounded-3xl bg-white p-5 shadow-sm">
+                  <div key={i} className="rounded-3xl bg-white dark:bg-slate-800 p-5 shadow-sm">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="font-bold text-ink">{i + 1}. {q.q}</p>
-                        <ul className="mt-2 space-y-1 text-sm text-muted">
+                        <p className="font-bold text-ink dark:text-slate-100">{i + 1}. {q.q}</p>
+                        <ul className="mt-2 space-y-1 text-sm text-muted dark:text-slate-400">
                           {q.options.map((o, oi) => (
                             <li key={oi}>{oi + 1}. {o}{oi === q.answerIndex ? ' ✓ সঠিক উত্তর' : ''}</li>
                           ))}
                         </ul>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => startQEdit(i)} className="rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-primary">সম্পাদনা</button>
-                        <button onClick={() => { if (confirm('এই প্রশ্নটি মুছে ফেলবেন?')) persistQuizQuestions(quizQuestions.filter((_, j) => j !== i)) }} className="rounded-full bg-red-50 px-4 py-2 text-sm font-bold text-red-700">মুছুন</button>
+                        <button onClick={() => startQEdit(i)} className="rounded-full bg-blue-50 dark:bg-slate-700 px-4 py-2 text-sm font-bold text-primary">সম্পাদনা</button>
+                        <button onClick={() => { if (confirm('এই প্রশ্নটি মুছে ফেলবেন?')) persistQuizQuestions(quizQuestions.filter((_, j) => j !== i)) }} className="rounded-full bg-red-50 dark:bg-red-950 px-4 py-2 text-sm font-bold text-red-700 dark:text-red-300">মুছুন</button>
                       </div>
                     </div>
                   </div>
                 ))}
-                {quizQuestions.length === 0 && <p className="rounded-3xl bg-white p-8 text-center text-muted shadow-sm">এই কোর্সে এখনো কোনো কুইজ নেই — ওপরে প্রথম প্রশ্নটি যোগ করুন।</p>}
+                {quizQuestions.length === 0 && <p className="rounded-3xl bg-white dark:bg-slate-800 p-8 text-center text-muted dark:text-slate-400 shadow-sm">এই কোর্সে এখনো কোনো কুইজ নেই — ওপরে প্রথম প্রশ্নটি যোগ করুন।</p>}
                 {quizQuestions.length > 0 && (
-                  <button onClick={() => { if (confirm('এই কোর্সের পুরো কুইজটি মুছে ফেলবেন?')) { deleteQuiz(quizCourseId); setQuizQuestions([]); setMsg('কুইজ মুছে ফেলা হয়েছে।') } }} className="rounded-full bg-red-50 px-5 py-2.5 font-bold text-red-700">পুরো কুইজ মুছে ফেলুন</button>
+                  <button onClick={() => { if (confirm('এই কোর্সের পুরো কুইজটি মুছে ফেলবেন?')) { deleteQuiz(quizCourseId); setQuizQuestions([]); setMsg('কুইজ মুছে ফেলা হয়েছে।') } }} className="rounded-full bg-red-50 dark:bg-red-950 px-5 py-2.5 font-bold text-red-700 dark:text-red-300">পুরো কুইজ মুছে ফেলুন</button>
                 )}
               </div>
             </>
@@ -703,10 +706,75 @@ export default function Admin() {
         </div>
       )}
 
+      {tab === 'live' && (
+        <div className="mt-6">
+          <button onClick={() => { setLiveForm({ id: '', courseId: courses[0]?.id || '', title: '', startsAt: '', platform: 'youtube', joinUrl: '', status: 'scheduled' }); setLiveError('') }} className="rounded-full bg-primary px-5 py-2.5 font-bold text-white">+ নতুন লাইভ ক্লাস</button>
+          <p className="mt-3 text-sm text-muted dark:text-slate-400">সময়সূচি সবাই দেখতে পাবে, কিন্তু জয়েন লিংক শুধু ওই কোর্স কেনা শিক্ষার্থী আর অ্যাডমিন দেখবে। এখনো কোনো লাইভ ক্লাস বানানো হয়নি — অ্যাডমিন এখান থেকে প্রথমটা বানাতে পারবে।</p>
+          {liveForm && (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault()
+                setLiveError('')
+                try {
+                  await saveLiveClass(liveForm)
+                  setLiveForm(null)
+                  setMsg('লাইভ ক্লাস সংরক্ষণ হয়েছে।')
+                } catch (err) { setLiveError(err.message || 'সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।') }
+              }}
+              className="mt-4 space-y-4 rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-sm"
+            >
+              <h2 className="font-bold text-ink dark:text-slate-100">{liveForm.id ? 'লাইভ ক্লাস সম্পাদনা' : 'নতুন লাইভ ক্লাস'}</h2>
+              <div><label className={labelCls}>কোর্স বেছে নিন</label>
+                <select className={inputCls} value={liveForm.courseId} onChange={e => setLiveForm({ ...liveForm, courseId: e.target.value })}>
+                  {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                </select></div>
+              <div><label className={labelCls}>লাইভ ক্লাসের নাম</label><input required className={inputCls} value={liveForm.title} onChange={e => setLiveForm({ ...liveForm, title: e.target.value })} placeholder="যেমন: ICT MCQ — লাইভ রিভিশন ক্লাস" /></div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div><label className={labelCls}>তারিখ ও সময়</label><input required type="datetime-local" className={inputCls} value={liveForm.startsAt} onChange={e => setLiveForm({ ...liveForm, startsAt: e.target.value })} /></div>
+                <div><label className={labelCls}>প্ল্যাটফর্ম</label>
+                  <select className={inputCls} value={liveForm.platform} onChange={e => setLiveForm({ ...liveForm, platform: e.target.value })}>
+                    <option value="youtube">ইউটিউব লাইভ</option>
+                    <option value="zoom">Zoom</option>
+                    <option value="meet">Google Meet</option>
+                    <option value="other">অন্যান্য</option>
+                  </select></div>
+              </div>
+              <div><label className={labelCls}>জয়েন করার লিংক (https://…)</label><input required className={inputCls} value={liveForm.joinUrl} onChange={e => setLiveForm({ ...liveForm, joinUrl: e.target.value })} placeholder="https://…" /></div>
+              <div><label className={labelCls}>অবস্থা</label>
+                <select className={inputCls} value={liveForm.status} onChange={e => setLiveForm({ ...liveForm, status: e.target.value })}>
+                  <option value="scheduled">আসছে (সূচি দেওয়া হয়েছে)</option>
+                  <option value="live">এখন লাইভ চলছে</option>
+                  <option value="ended">শেষ হয়েছে</option>
+                </select></div>
+              {liveError && <p className="rounded-2xl bg-red-50 dark:bg-red-950 p-3 text-sm font-semibold text-red-700 dark:text-red-300">{liveError}</p>}
+              <div className="flex gap-3">
+                <button className="rounded-full bg-primary px-6 py-2.5 font-bold text-white">সংরক্ষণ</button>
+                <button type="button" onClick={() => setLiveForm(null)} className="rounded-full bg-slate-100 dark:bg-slate-700 px-6 py-2.5 font-bold text-ink dark:text-slate-100">বাতিল</button>
+              </div>
+            </form>
+          )}
+          <div className="mt-4 space-y-3">
+            {[...liveClasses].sort((a, b) => (a.startsAt || '').localeCompare(b.startsAt || '')).map(lc => (
+              <div key={lc.id} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-white dark:bg-slate-800 p-5 shadow-sm">
+                <div>
+                  <p className="font-bold text-ink dark:text-slate-100">{lc.title}</p>
+                  <p className="text-sm text-muted dark:text-slate-400">{lc.courseTitle} • {lc.startsAt ? new Date(lc.startsAt).toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' }) : ''} • {lc.status === 'live' ? 'এখন লাইভ' : lc.status === 'ended' ? 'শেষ' : 'আসছে'}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => { setLiveForm({ ...lc }); setLiveError('') }} className="rounded-full bg-blue-50 dark:bg-slate-700 px-4 py-2 text-sm font-bold text-primary">সম্পাদনা</button>
+                  <button onClick={() => { if (confirm(`“${lc.title}” মুছে ফেলবেন?`)) { deleteLiveClass(lc.id); setMsg('লাইভ ক্লাস মুছে ফেলা হয়েছে।') } }} className="rounded-full bg-red-50 dark:bg-red-950 px-4 py-2 text-sm font-bold text-red-700 dark:text-red-300">মুছুন</button>
+                </div>
+              </div>
+            ))}
+            {liveClasses.length === 0 && <p className="rounded-3xl bg-white dark:bg-slate-800 p-8 text-center text-muted dark:text-slate-400 shadow-sm">এখনো কোনো লাইভ ক্লাস বানানো হয়নি।</p>}
+          </div>
+        </div>
+      )}
+
       {tab === 'settings' && (
-        <form onSubmit={saveSettingsForm} className="mt-6 max-w-2xl space-y-4 rounded-3xl bg-white p-6 shadow-sm">
-          <h2 className="font-bold text-ink">পেমেন্ট সেটিংস</h2>
-          <p className="text-sm text-muted">এই নম্বরগুলোই কেনার পেজে শিক্ষার্থীদের দেখানো হবে। টাকা এই নম্বরে পাঠাতে হবে।</p>
+        <form onSubmit={saveSettingsForm} className="mt-6 max-w-2xl space-y-4 rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-sm">
+          <h2 className="font-bold text-ink dark:text-slate-100">পেমেন্ট সেটিংস</h2>
+          <p className="text-sm text-muted dark:text-slate-400">এই নম্বরগুলোই কেনার পেজে শিক্ষার্থীদের দেখানো হবে। টাকা এই নম্বরে পাঠাতে হবে।</p>
           <div><label className={labelCls}>বিকাশ নম্বর (Personal)</label><input className={inputCls} value={(settingsForm || settings).bkashNumber} onChange={e => setSettingsForm({ ...(settingsForm || settings), bkashNumber: e.target.value })} placeholder="01XXXXXXXXX" /></div>
           <div><label className={labelCls}>নগদ নম্বর (Personal)</label><input className={inputCls} value={(settingsForm || settings).nagadNumber} onChange={e => setSettingsForm({ ...(settingsForm || settings), nagadNumber: e.target.value })} placeholder="01XXXXXXXXX" /></div>
           <div><label className={labelCls}>কেনার পেজের নোটিশ</label><textarea rows="2" className={inputCls} value={(settingsForm || settings).siteNotice} onChange={e => setSettingsForm({ ...(settingsForm || settings), siteNotice: e.target.value })} /></div>

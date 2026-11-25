@@ -17,12 +17,13 @@ import Certificate from './pages/Certificate'
 import Quiz from './pages/Quiz'
 import Notifications from './pages/Notifications'
 import Teacher from './pages/Teacher'
+import LiveClasses from './pages/LiveClasses'
 
 function NotFound() {
   return (
     <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
-      <h1 className="text-3xl font-bold text-ink">পেজটি পাওয়া যায়নি</h1>
-      <p className="mt-2 text-muted">আপনি যে ঠিকানায় গেছেন, সেখানে কিছু নেই।</p>
+      <h1 className="text-3xl font-bold text-ink dark:text-slate-100">পেজটি পাওয়া যায়নি</h1>
+      <p className="mt-2 text-muted dark:text-slate-400">আপনি যে ঠিকানায় গেছেন, সেখানে কিছু নেই।</p>
       <a href="/" className="mt-6 inline-block rounded-full bg-primary px-6 py-3 font-bold text-white">হোমে ফিরুন</a>
     </div>
   )
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/quiz/:courseId" element={<Quiz />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/teacher" element={<Teacher />} />
+            <Route path="/live-classes" element={<LiveClasses />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/faq" element={<Faq />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />

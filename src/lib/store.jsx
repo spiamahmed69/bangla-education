@@ -39,6 +39,7 @@ function seedDemo() {
     progress: [],
     quizzes: {},
     notifications: [],
+    liveClasses: [],
   }
 }
 
@@ -68,6 +69,7 @@ export function StoreProvider({ children }) {
   const [progress, setProgress] = useState([])
   const [quizzes, setQuizzes] = useState({})
   const [notifications, setNotifications] = useState([])
+  const [liveClasses, setLiveClasses] = useState([])
   const [dataLoading, setDataLoading] = useState(true)
 
   const firebaseMode = isFirebaseConfigured
@@ -135,6 +137,15 @@ export function StoreProvider({ children }) {
             console.warn('কুপন পড়া যায়নি (নিয়ম প্রকাশ করা হয়নি হয়তো):', e)
             setCoupons([])
           }
+          // লাইভ ক্লাসের সময়সূচি সবার জন্য পাবলিক — নিয়ম এখনো কনসোলে প্রকাশ
+          // না হলে পড়া যাবে না, সেক্ষেত্রে খালি তালিকা দেখাবে, বাকি ডেটা আটকাবে না।
+          try {
+            const ls = await getDocs(collection(db, 'liveClasses'))
+            setLiveClasses(ls.docs.map(d => ({ id: d.id, ...d.data() })))
+          } catch (e) {
+            console.warn('লাইভ ক্লাস পড়া যায়নি (নিয়ম প্রকাশ করা হয়নি হয়তো):', e)
+            setLiveClasses([])
+          }
         } catch (e) {
           console.warn('Firebase ডেটা পড়া যায়নি, নমুনা ডেটা দেখানো হচ্ছে:', e)
         }
@@ -149,6 +160,7 @@ export function StoreProvider({ children }) {
         setNotifications(demo.notifications || [])
         setProgress(demo.progress || [])
         setQuizzes(demo.quizzes || {})
+        setLiveClasses(demo.liveClasses || [])
         setAllUsers(demo.users.map(({ password, ...u }) => u))
       }
       setDataLoading(false)
@@ -655,6 +667,58 @@ export function StoreProvider({ children }) {
     setQuizzes(prev => { const next = { ...prev }; delete next[courseId]; return next })
   }, [firebaseMode, user, persistDemo])
 
+  // ---------- Live classes: সময়সূচি সবাই পড়তে পারে, বানায় শুধু অ্যাডমিন ----------
+  // কোনো লাইভ ক্লাস সিড করা হয় না — অ্যাডমিন প্যানেল থেকে প্রথমটা বানাতে হবে।
+  const saveLiveClass = useCallback(async (live) => {
+    if (!user || user.role !== 'admin') throw new Error('শুধু অ্যাডমিন লাইভ ক্লাস বানাতে পারে।')
+    const title = (live.title || '').trim()
+    if (!title) throw new Error('লাইভ ক্লাসের নাম লিখুন।')
+    if (!live.courseId) throw new Error('কোর্স বেছে নিন।')
+    if (!live.startsAt) throw new Error('লাইভ ক্লাসের তারিখ ও সময় দিন।')
+    if (!live.joinUrl || !/^https?:\/\//.test(live.joinUrl.trim())) throw new Error('জয়েন করার লিংকটি সঠিকভাবে দিন (https://…)।')
+    const course = courses.find(c => c.id === live.courseId)
+    const saved = {
+      courseId: live.courseId,
+      courseTitle: course?.title || live.courseTitle || live.courseId,
+      title,
+      startsAt: live.startsAt,
+      platform: ['youtube', 'zoom', 'meet', 'other'].includes(live.platform) ? live.platform : 'youtube',
+      joinUrl: live.joinUrl.trim(),
+      status: ['scheduled', 'live', 'ended'].includes(live.status) ? live.status : 'scheduled',
+      createdAt: live.createdAt || new Date().toISOString(),
+    }
+    if (firebaseMode) {
+      const ref = live.id ? doc(db, 'liveClasses', live.id) : doc(collection(db, 'liveClasses'))
+      await setDoc(ref, saved, { merge: true })
+      const withId = { id: ref.id, ...saved }
+      setLiveClasses(prev => prev.some(x => x.id === ref.id)
+        ? prev.map(x => x.id === ref.id ? withId : x)
+        : [...prev, withId])
+      return ref.id
+    }
+    const demo = loadDemo()
+    const id = live.id || `lc-${Date.now()}`
+    const withId = { id, ...saved }
+    const list = demo.liveClasses || []
+    demo.liveClasses = list.some(x => x.id === id)
+      ? list.map(x => x.id === id ? withId : x)
+      : [...list, withId]
+    persistDemo({ liveClasses: demo.liveClasses })
+    setLiveClasses(demo.liveClasses)
+    return id
+  }, [firebaseMode, user, courses, persistDemo])
+
+  const deleteLiveClass = useCallback(async (liveId) => {
+    if (!user || user.role !== 'admin') throw new Error('শুধু অ্যাডমিন লাইভ ক্লাস মুছতে পারে।')
+    if (firebaseMode) { await deleteDoc(doc(db, 'liveClasses', liveId)) }
+    else {
+      const demo = loadDemo()
+      demo.liveClasses = (demo.liveClasses || []).filter(x => x.id !== liveId)
+      persistDemo({ liveClasses: demo.liveClasses })
+    }
+    setLiveClasses(prev => prev.filter(x => x.id !== liveId))
+  }, [firebaseMode, user, persistDemo])
+
   // ---------- Lesson access: ভিডিও URL শুধু এনরোল করা ইউজারের জন্য ----------
   const getLessonVideo = useCallback(async (courseId, lessonId) => {
     if (!isEnrolled(courseId)) return null
@@ -725,7 +789,7 @@ export function StoreProvider({ children }) {
 
   const value = useMemo(() => ({
     firebaseMode, user, authLoading, dataLoading,
-    courses, settings, orders, enrollments, allUsers, reviews, coupons, progress, quizzes, notifications, unreadNotifications,
+    courses, settings, orders, enrollments, allUsers, reviews, coupons, progress, quizzes, notifications, unreadNotifications, liveClasses,
     register, login, logout, logoutDevice,
     isEnrolled, pendingOrderFor, enrollmentCount, submitOrder, decideOrder, markNotificationRead, markAllNotificationsRead,
     saveCourse, deleteCourse, saveSettings, setUserRole, getLessonVideo,
@@ -733,8 +797,9 @@ export function StoreProvider({ children }) {
     validateCoupon, saveCoupon, deleteCoupon,
     completedLessonIds, progressPct, toggleLessonComplete, progressUpdatedAt,
     getQuiz, saveQuiz, deleteQuiz,
+    saveLiveClass, deleteLiveClass,
     getCourse: (id) => courses.find(c => c.id === id),
-  }), [firebaseMode, user, authLoading, dataLoading, courses, settings, orders, enrollments, allUsers, reviews, coupons, progress, quizzes, notifications, unreadNotifications,
+  }), [firebaseMode, user, authLoading, dataLoading, courses, settings, orders, enrollments, allUsers, reviews, coupons, progress, quizzes, notifications, unreadNotifications, liveClasses,
     register, login, logout, logoutDevice, isEnrolled, pendingOrderFor, enrollmentCount, submitOrder, decideOrder, markNotificationRead, markAllNotificationsRead,
     saveCourse, deleteCourse, saveSettings, setUserRole, getLessonVideo,
     reviewsByCourse, averageRating, submitReview, deleteReview,

@@ -22,15 +22,15 @@ export default function Checkout() {
   if (authLoading || dataLoading) {
     return (
       <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
-        <p className="text-muted">লোড হচ্ছে…</p>
+        <p className="text-muted dark:text-slate-400">লোড হচ্ছে…</p>
       </div>
     )
   }
   if (!user) {
     return (
       <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
-        <h1 className="text-2xl font-bold text-ink">কিনতে হলে প্রথমে লগইন করুন</h1>
-        <p className="mt-2 text-muted">লগইন ছাড়া কোর্স কেনা যাবে না।</p>
+        <h1 className="text-2xl font-bold text-ink dark:text-slate-100">কিনতে হলে প্রথমে লগইন করুন</h1>
+        <p className="mt-2 text-muted dark:text-slate-400">লগইন ছাড়া কোর্স কেনা যাবে না।</p>
         <Link to="/login" className="mt-6 inline-block rounded-full bg-primary px-6 py-3 font-bold text-white">লগইন করুন</Link>
       </div>
     )
@@ -38,7 +38,7 @@ export default function Checkout() {
   if (!course) {
     return (
       <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
-        <h1 className="text-2xl font-bold text-ink">কোর্সটি পাওয়া যায়নি</h1>
+        <h1 className="text-2xl font-bold text-ink dark:text-slate-100">কোর্সটি পাওয়া যায়নি</h1>
         <Link to="/courses" className="mt-6 inline-block rounded-full bg-primary px-6 py-3 font-bold text-white">কোর্স তালিকায় ফিরুন</Link>
       </div>
     )
@@ -46,7 +46,7 @@ export default function Checkout() {
   if (isEnrolled(course.id)) {
     return (
       <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
-        <h1 className="text-2xl font-bold text-ink">আপনি এই কোর্সটি ইতিমধ্যে কিনেছেন</h1>
+        <h1 className="text-2xl font-bold text-ink dark:text-slate-100">আপনি এই কোর্সটি ইতিমধ্যে কিনেছেন</h1>
         <Link to={`/learn/${course.id}/${course.lessons?.[0]?.id || ''}`} className="mt-6 inline-block rounded-full bg-emerald-600 px-6 py-3 font-bold text-white">ক্লাস শুরু করুন</Link>
       </div>
     )
@@ -55,10 +55,10 @@ export default function Checkout() {
   if (pending && !done) {
     return (
       <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
-        <div className="rounded-[2rem] bg-white p-10 shadow-[0_8px_30px_rgba(37,99,235,0.10)]">
-          <h1 className="text-2xl font-bold text-ink">আপনার পেমেন্ট জমা আছে</h1>
-          <p className="mt-2 text-muted">ট্রানজাকশন: <b className="text-ink">{pending.txnId}</b> • {pending.method === 'bkash' ? 'বিকাশ' : 'নগদ'} • ৳{bn(pending.price)}{pending.originalPrice && pending.originalPrice !== pending.price ? <span className="line-through"> ৳{bn(pending.originalPrice)}</span> : ''}{pending.couponCode ? ` • কুপন: ${pending.couponCode}` : ''}</p>
-          <p className="mt-2 text-muted">অ্যাডমিন অ্যাপ্রুভ করলেই ক্লাস খুলে যাবে। অবস্থা দেখুন “আমার কোর্স” পেজে।</p>
+        <div className="rounded-[2rem] bg-white dark:bg-slate-800 p-10 shadow-[0_8px_30px_rgba(37,99,235,0.10)]">
+          <h1 className="text-2xl font-bold text-ink dark:text-slate-100">আপনার পেমেন্ট জমা আছে</h1>
+          <p className="mt-2 text-muted dark:text-slate-400">ট্রানজাকশন: <b className="text-ink dark:text-slate-100">{pending.txnId}</b> • {pending.method === 'bkash' ? 'বিকাশ' : 'নগদ'} • ৳{bn(pending.price)}{pending.originalPrice && pending.originalPrice !== pending.price ? <span className="line-through"> ৳{bn(pending.originalPrice)}</span> : ''}{pending.couponCode ? ` • কুপন: ${pending.couponCode}` : ''}</p>
+          <p className="mt-2 text-muted dark:text-slate-400">অ্যাডমিন অ্যাপ্রুভ করলেই ক্লাস খুলে যাবে। অবস্থা দেখুন “আমার কোর্স” পেজে।</p>
           <Link to="/my-courses" className="mt-6 inline-block rounded-full bg-primary px-6 py-3 font-bold text-white">আমার কোর্স দেখুন</Link>
         </div>
       </div>
@@ -117,10 +117,10 @@ export default function Checkout() {
   if (done) {
     return (
       <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
-        <div className="rounded-[2rem] bg-white p-10 shadow-[0_8px_30px_rgba(37,99,235,0.10)]">
+        <div className="rounded-[2rem] bg-white dark:bg-slate-800 p-10 shadow-[0_8px_30px_rgba(37,99,235,0.10)]">
           <div className="text-5xl">✓</div>
-          <h1 className="mt-4 text-2xl font-bold text-ink">{isFree ? 'এনরোলমেন্ট জমা হয়েছে' : 'পেমেন্ট জমা হয়েছে'}</h1>
-          <p className="mt-2 text-muted">{isFree ? `অ্যাডমিন অ্যাপ্রুভ করলেই “${course.title}” কোর্সের ক্লাস খুলে যাবে।` : `অ্যাডমিন আপনার ট্রানজাকশন যাচাই করে অ্যাপ্রুভ করলেই “${course.title}” কোর্সের ক্লাস খুলে যাবে।`}</p>
+          <h1 className="mt-4 text-2xl font-bold text-ink dark:text-slate-100">{isFree ? 'এনরোলমেন্ট জমা হয়েছে' : 'পেমেন্ট জমা হয়েছে'}</h1>
+          <p className="mt-2 text-muted dark:text-slate-400">{isFree ? `অ্যাডমিন অ্যাপ্রুভ করলেই “${course.title}” কোর্সের ক্লাস খুলে যাবে।` : `অ্যাডমিন আপনার ট্রানজাকশন যাচাই করে অ্যাপ্রুভ করলেই “${course.title}” কোর্সের ক্লাস খুলে যাবে।`}</p>
           <button onClick={() => navigate('/my-courses')} className="mt-6 rounded-full bg-primary px-6 py-3 font-bold text-white">আমার কোর্স দেখুন</button>
         </div>
       </div>
@@ -129,36 +129,36 @@ export default function Checkout() {
 
   return (
     <div className="mx-auto max-w-3xl px-5 pt-10">
-      <h1 className="text-3xl font-bold text-ink">{course.price === 0 ? 'ফ্রি এনরোল করুন' : 'কোর্স কিনুন'}</h1>
-      <p className="mt-2 text-muted">{course.price === 0 ? 'এই কোর্সটি ফ্রি — এনরোল করলেই অ্যাডমিন অ্যাপ্রুভের পর ক্লাস খুলবে।' : 'পেমেন্ট এই সাইট থেকে সরাসরি নয় — নিচের নম্বরে টাকা পাঠিয়ে তথ্য জমা দিন।'}</p>
+      <h1 className="text-3xl font-bold text-ink dark:text-slate-100">{course.price === 0 ? 'ফ্রি এনরোল করুন' : 'কোর্স কিনুন'}</h1>
+      <p className="mt-2 text-muted dark:text-slate-400">{course.price === 0 ? 'এই কোর্সটি ফ্রি — এনরোল করলেই অ্যাডমিন অ্যাপ্রুভের পর ক্লাস খুলবে।' : 'পেমেন্ট এই সাইট থেকে সরাসরি নয় — নিচের নম্বরে টাকা পাঠিয়ে তথ্য জমা দিন।'}</p>
 
-      <div className="mt-6 rounded-[2rem] bg-white p-6 shadow-[0_8px_30px_rgba(37,99,235,0.10)] sm:p-8">
+      <div className="mt-6 rounded-[2rem] bg-white dark:bg-slate-800 p-6 shadow-[0_8px_30px_rgba(37,99,235,0.10)] sm:p-8">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-ink">{course.title}</h2>
-            <p className="text-sm text-muted">{course.lessons?.length || 0}টি ক্লাস • {course.level}</p>
+            <h2 className="text-xl font-bold text-ink dark:text-slate-100">{course.title}</h2>
+            <p className="text-sm text-muted dark:text-slate-400">{course.lessons?.length || 0}টি ক্লাস • {course.level}</p>
           </div>
           <div className="text-right">
-            {appliedCoupon && <span className="block text-muted line-through">৳{bn(course.price)}</span>}
-            <span className="text-2xl font-bold text-ink">৳{bn(finalPrice)}</span>
+            {appliedCoupon && <span className="block text-muted dark:text-slate-400 line-through">৳{bn(course.price)}</span>}
+            <span className="text-2xl font-bold text-ink dark:text-slate-100">৳{bn(finalPrice)}</span>
           </div>
         </div>
 
-        {settings.siteNotice && <p className="mt-4 rounded-2xl bg-blue-50 p-3 text-sm font-semibold text-primary">{settings.siteNotice}</p>}
+        {settings.siteNotice && <p className="mt-4 rounded-2xl bg-blue-50 dark:bg-slate-700 p-3 text-sm font-semibold text-primary">{settings.siteNotice}</p>}
 
         {/* কুপন কোড — ছাড় থাকলে আসল দাম কেটে ছাড়ের পরের দাম দেখায় */}
-        <div className="mt-6 rounded-2xl bg-page p-4">
-          <label className="mb-2 block text-sm font-bold text-ink">কুপন কোড (যদি থাকে)</label>
+        <div className="mt-6 rounded-2xl bg-page dark:bg-slate-900 p-4">
+          <label className="mb-2 block text-sm font-bold text-ink dark:text-slate-100">কুপন কোড (যদি থাকে)</label>
           {appliedCoupon ? (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-emerald-50 p-3">
-              <p className="text-sm font-bold text-emerald-800">✓ {appliedCoupon.code} — ৳{bn(discount)} ছাড়</p>
-              <button type="button" onClick={removeCoupon} className="rounded-full bg-white px-3 py-1 text-sm font-bold text-red-700 shadow-sm">সরান</button>
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950 p-3">
+              <p className="text-sm font-bold text-emerald-800 dark:text-emerald-200">✓ {appliedCoupon.code} — ৳{bn(discount)} ছাড়</p>
+              <button type="button" onClick={removeCoupon} className="rounded-full bg-white dark:bg-slate-800 px-3 py-1 text-sm font-bold text-red-700 dark:text-red-300 shadow-sm">সরান</button>
             </div>
           ) : (
             <>
               <div className="flex gap-2">
                 <input value={couponInput} onChange={e => setCouponInput(e.target.value.toUpperCase())} placeholder="যেমন: SP10"
-                  className="w-full rounded-2xl border border-blue-100 bg-white px-4 py-2.5 uppercase focus:border-primary focus:outline-none" />
+                  className="w-full rounded-2xl border border-blue-100 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 uppercase focus:border-primary focus:outline-none" />
                 <button type="button" onClick={applyCoupon} className="shrink-0 rounded-full bg-primary px-5 py-2.5 font-bold text-white">প্রয়োগ করুন</button>
               </div>
               {couponError && <p className="mt-2 text-sm font-bold text-red-600">{couponError}</p>}
@@ -168,14 +168,14 @@ export default function Checkout() {
 
         <form onSubmit={submit} className="mt-6 space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-bold text-ink">পেমেন্ট মাধ্যম</label>
+            <label className="mb-2 block text-sm font-bold text-ink dark:text-slate-100">পেমেন্ট মাধ্যম</label>
             <div className="flex gap-3">
               {[
                 ['bkash', 'বিকাশ', '#D12053'],
                 ['nagad', 'নগদ', '#F6921E'],
               ].map(([v, label, color]) => (
                 <button key={v} type="button" onClick={() => setMethod(v)}
-                  className={`flex-1 rounded-2xl border-2 py-3 font-bold ${method === v ? 'text-white' : 'border-slate-200 bg-white text-ink'}`}
+                  className={`flex-1 rounded-2xl border-2 py-3 font-bold ${method === v ? 'text-white' : 'border-slate-200 bg-white dark:bg-slate-800 text-ink dark:text-slate-100'}`}
                   style={method === v ? { background: color, borderColor: color } : {}}>
                   {label}
                 </button>
@@ -183,30 +183,30 @@ export default function Checkout() {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-page p-4 text-center">
-            <p className="text-sm text-muted">{method === 'bkash' ? 'বিকাশ' : 'নগদ'} নম্বর (Send Money)</p>
+          <div className="rounded-2xl bg-page dark:bg-slate-900 p-4 text-center">
+            <p className="text-sm text-muted dark:text-slate-400">{method === 'bkash' ? 'বিকাশ' : 'নগদ'} নম্বর (Send Money)</p>
             {isFree ? (
-              <p className="mt-1 font-bold text-emerald-700">{course.price === 0 ? 'এই কোর্সটি ফ্রি — টাকা পাঠাতে হবে না।' : 'কুপনে পুরো ছাড় পেয়েছেন — টাকা পাঠাতে হবে না।'}</p>
+              <p className="mt-1 font-bold text-emerald-700 dark:text-emerald-300">{course.price === 0 ? 'এই কোর্সটি ফ্রি — টাকা পাঠাতে হবে না।' : 'কুপনে পুরো ছাড় পেয়েছেন — টাকা পাঠাতে হবে না।'}</p>
             ) : payNumber ? (
-              <p className="mt-1 text-2xl font-bold tracking-wider text-ink">{payNumber}</p>
+              <p className="mt-1 text-2xl font-bold tracking-wider text-ink dark:text-slate-100">{payNumber}</p>
             ) : (
-              <p className="mt-1 font-bold text-amber-700">পেমেন্ট নম্বর এখনো অ্যাডমিন বসাননি — কেনার আগে অ্যাডমিনের সঙ্গে যোগাযোগ করুন।</p>
+              <p className="mt-1 font-bold text-amber-700 dark:text-amber-300">পেমেন্ট নম্বর এখনো অ্যাডমিন বসাননি — কেনার আগে অ্যাডমিনের সঙ্গে যোগাযোগ করুন।</p>
             )}
-            <p className="mt-1 text-sm font-bold text-ink">পাঠাতে হবে: ৳{bn(finalPrice)}{appliedCoupon ? <span className="font-semibold text-muted"> (আসল দাম ৳{bn(course.price)} — ছাড় ৳{bn(discount)})</span> : ''}</p>
+            <p className="mt-1 text-sm font-bold text-ink dark:text-slate-100">পাঠাতে হবে: ৳{bn(finalPrice)}{appliedCoupon ? <span className="font-semibold text-muted dark:text-slate-400"> (আসল দাম ৳{bn(course.price)} — ছাড় ৳{bn(discount)})</span> : ''}</p>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-bold text-ink">যে নম্বর থেকে টাকা পাঠিয়েছেন{isFree ? ' (ফ্রি — লাগবে না)' : ''}</label>
+            <label className="mb-2 block text-sm font-bold text-ink dark:text-slate-100">যে নম্বর থেকে টাকা পাঠিয়েছেন{isFree ? ' (ফ্রি — লাগবে না)' : ''}</label>
             <input required={!isFree} value={senderNumber} onChange={e => setSenderNumber(e.target.value)} placeholder="যেমন: 01XXXXXXXXX"
-              className="w-full rounded-2xl border border-blue-100 bg-page px-4 py-3 focus:border-primary focus:outline-none" />
+              className="w-full rounded-2xl border border-blue-100 dark:border-slate-600 bg-page dark:bg-slate-900 px-4 py-3 focus:border-primary focus:outline-none" />
           </div>
           <div>
-            <label className="mb-2 block text-sm font-bold text-ink">ট্রানজাকশন আইডি অথবা শেষ ৩ সংখ্যা{isFree ? ' (ফ্রি — লাগবে না)' : ''}</label>
+            <label className="mb-2 block text-sm font-bold text-ink dark:text-slate-100">ট্রানজাকশন আইডি অথবা শেষ ৩ সংখ্যা{isFree ? ' (ফ্রি — লাগবে না)' : ''}</label>
             <input required={!isFree} value={txnId} onChange={e => setTxnId(e.target.value)} placeholder="যেমন: 9H7X2KLMNP অথবা 123"
-              className="w-full rounded-2xl border border-blue-100 bg-page px-4 py-3 focus:border-primary focus:outline-none" />
+              className="w-full rounded-2xl border border-blue-100 dark:border-slate-600 bg-page dark:bg-slate-900 px-4 py-3 focus:border-primary focus:outline-none" />
           </div>
 
-          {error && <p className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p>}
+          {error && <p className="rounded-2xl bg-red-50 dark:bg-red-950 p-3 text-sm font-semibold text-red-700 dark:text-red-300">{error}</p>}
           <button disabled={busy || (!isFree && !payNumber)} className="w-full rounded-full bg-cta py-3 font-bold text-white hover:bg-cta-dark disabled:opacity-60">
             {busy ? 'জমা হচ্ছে…' : isFree ? 'ফ্রি কোর্সটি নিন' : 'পেমেন্ট জমা দিন'}
           </button>

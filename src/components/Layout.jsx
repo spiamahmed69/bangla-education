@@ -1,5 +1,29 @@
+import { useEffect, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useStore } from '../lib/store'
+
+const THEME_KEY = 'be_theme'
+
+// ডার্ক মোড — পছন্দ localStorage-এ থাকে (ডিফল্ট হালকা মোড)
+function ThemeToggle() {
+  const [dark, setDark] = useState(() => {
+    try { return localStorage.getItem(THEME_KEY) === 'dark' } catch { return false }
+  })
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark)
+    try { localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light') } catch { /* ignore */ }
+  }, [dark])
+  return (
+    <button
+      onClick={() => setDark(d => !d)}
+      aria-label={dark ? 'হালকা মোডে যান' : 'ডার্ক মোডে যান'}
+      title={dark ? 'হালকা মোড' : 'ডার্ক মোড'}
+      className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-lg hover:bg-blue-100 dark:bg-slate-700 dark:hover:bg-slate-600"
+    >
+      {dark ? '☀️' : '🌙'}
+    </button>
+  )
+}
 
 function DemoBanner({ firebaseMode }) {
   if (firebaseMode) return null
@@ -40,10 +64,10 @@ export default function Layout({ children }) {
   const navigate = useNavigate()
   const onLogout = async () => { await logout(); navigate('/') }
   const linkCls = ({ isActive }) =>
-    `px-4 py-2 rounded-full text-sm font-semibold transition ${isActive ? 'bg-primary text-white' : 'text-ink hover:bg-blue-50'}`
+    `px-4 py-2 rounded-full text-sm font-semibold transition ${isActive ? 'bg-primary text-white' : 'text-ink hover:bg-blue-50 dark:text-slate-100 dark:hover:bg-slate-700'}`
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-page dark:bg-slate-900 text-ink dark:bg-slate-950 dark:text-slate-100">
       <DemoBanner firebaseMode={firebaseMode} />
       {/* পিল ন্যাভবার */}
       <header className="sticky top-3 z-40 px-3 sm:px-6">
@@ -51,21 +75,23 @@ export default function Layout({ children }) {
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-cyanx text-lg font-bold text-white">বা</span>
             <span className="leading-tight">
-              <span className="block text-base font-bold text-ink sm:text-lg">বাংলা এডুকেশন</span>
-              <span className="hidden text-[11px] font-medium text-muted sm:block">অনলাইনে শিখুন বাংলায়</span>
+              <span className="block text-base font-bold text-ink dark:text-slate-100 sm:text-lg">বাংলা এডুকেশন</span>
+              <span className="hidden text-[11px] font-medium text-muted dark:text-slate-400 sm:block">অনলাইনে শিখুন বাংলায়</span>
             </span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
             <NavLink to="/" className={linkCls} end>হোম</NavLink>
             <NavLink to="/courses" className={linkCls}>কোর্সসমূহ</NavLink>
+            <NavLink to="/live-classes" className={linkCls}>লাইভ ক্লাস</NavLink>
             <NavLink to="/about" className={linkCls}>আমাদের সম্পর্কে</NavLink>
             {user && <NavLink to="/my-courses" className={linkCls}>আমার কোর্স</NavLink>}
             {user?.role === 'admin' && <NavLink to="/admin" className={linkCls}>অ্যাডমিন</NavLink>}
             {user?.role === 'teacher' && <NavLink to="/teacher" className={linkCls}>শিক্ষক প্যানেল</NavLink>}
           </nav>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             {user && (
-              <Link to="/notifications" className="relative flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-lg hover:bg-blue-100" aria-label="নোটিফিকেশন">
+              <Link to="/notifications" className="relative flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 dark:bg-slate-700 text-lg hover:bg-blue-100" aria-label="নোটিফিকেশন">
                 🔔
                 {unreadNotifications > 0 && (
                   <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[11px] font-bold text-white">{unreadNotifications > 9 ? '৯+' : unreadNotifications}</span>
@@ -74,12 +100,12 @@ export default function Layout({ children }) {
             )}
             {user ? (
               <>
-                <span className="hidden max-w-32 truncate text-sm font-semibold text-ink lg:block">{user.name}</span>
+                <span className="hidden max-w-32 truncate text-sm font-semibold text-ink dark:text-slate-100 lg:block">{user.name}</span>
                 <button onClick={onLogout} className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-deep">লগআউট</button>
               </>
             ) : (
               <>
-                <Link to="/login" className="rounded-full px-3 py-2 text-sm font-semibold text-ink hover:bg-blue-50">লগইন</Link>
+                <Link to="/login" className="rounded-full px-3 py-2 text-sm font-semibold text-ink dark:text-slate-100 hover:bg-blue-50 dark:hover:bg-slate-700">লগইন</Link>
                 <Link to="/register" className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">রেজিস্টার</Link>
               </>
             )}
@@ -89,6 +115,7 @@ export default function Layout({ children }) {
         <div className="glass mx-auto mt-2 flex max-w-6xl items-center gap-1 overflow-x-auto rounded-full px-2 py-1.5 md:hidden">
           <NavLink to="/" className={linkCls} end>হোম</NavLink>
           <NavLink to="/courses" className={linkCls}>কোর্সসমূহ</NavLink>
+          <NavLink to="/live-classes" className={linkCls}>লাইভ ক্লাস</NavLink>
           <NavLink to="/about" className={linkCls}>আমাদের সম্পর্কে</NavLink>
           {user && <NavLink to="/my-courses" className={linkCls}>আমার কোর্স</NavLink>}
           {user?.role === 'admin' && <NavLink to="/admin" className={linkCls}>অ্যাডমিন</NavLink>}
@@ -112,6 +139,7 @@ export default function Layout({ children }) {
             <h3 className="font-bold">দ্রুত লিংক</h3>
             <ul className="mt-3 space-y-2 text-sm text-white/70">
               <li><Link className="hover:text-white" to="/courses">কোর্সসমূহ</Link></li>
+              <li><Link className="hover:text-white" to="/live-classes">লাইভ ক্লাস</Link></li>
               <li><Link className="hover:text-white" to="/my-courses">আমার কোর্স</Link></li>
               <li><Link className="hover:text-white" to="/about">আমাদের সম্পর্কে</Link></li>
               <li><Link className="hover:text-white" to="/contact">যোগাযোগ</Link></li>
