@@ -1,7 +1,8 @@
 import { Link, useParams } from 'react-router-dom'
 import { useStore } from '../lib/store'
 import { CoverArt } from '../components/Layout'
-import { bn } from '../components/CourseCard'
+import { bn, hasFreeDemo } from '../components/CourseCard'
+import SecurePlayer from '../components/SecurePlayer'
 
 export default function CourseDetail() {
   const { id } = useParams()
@@ -26,6 +27,8 @@ export default function CourseDetail() {
   const enrolled = isEnrolled(course.id)
   const pending = pendingOrderFor(course.id)
   const firstLesson = course.lessons?.[0]
+  // ফ্রি ডেমো ক্লাস — অ্যাডমিন ফ্রি চিহ্ন দেওয়া লেসন, লগইন/কেনা ছাড়াই দেখা যাবে
+  const freeLesson = (course.lessons || []).find(l => l.isFree && l.demoYoutubeId)
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-10">
@@ -39,6 +42,23 @@ export default function CourseDetail() {
           <h1 className="mt-4 text-3xl font-bold text-ink">{course.title}</h1>
           <p className="mt-2 text-muted">{course.description}</p>
           <p className="mt-3 text-sm text-muted">শিক্ষক: {course.teacher}{course.sample ? ' (নমুনা)' : ''}</p>
+          {hasFreeDemo(course) && <p className="mt-3 text-sm font-bold text-emerald-700">▶ এই কোর্সে ফ্রি ডেমো ক্লাস আছে — কিনে দেখতে পারেন কেমন শেখানো হয়।</p>}
+
+          {!enrolled && freeLesson && (
+            <div className="mt-8">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xl font-bold text-ink">ফ্রি ডেমো ক্লাস</h2>
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">ফ্রি — লগইন ছাড়াই দেখুন</span>
+              </div>
+              <p className="mt-1 text-sm text-muted">{freeLesson.title} • {freeLesson.duration}</p>
+              <div className="mt-4 overflow-hidden rounded-[2rem] shadow-xl">
+                <SecurePlayer videoId={freeLesson.demoYoutubeId} title={freeLesson.title} />
+              </div>
+              <p className="mt-3 rounded-2xl bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+                এই ক্লাসটি ফ্রি — বাকি {Math.max((course.lessons?.length || 1) - 1, 0)}টি ক্লাস কোর্স কিনে অ্যাডমিনের অ্যাপ্রুভ পেলেই খুলবে।
+              </p>
+            </div>
+          )}
 
           <h2 className="mt-8 text-xl font-bold text-ink">ক্লাসের তালিকা ({course.lessons?.length || 0}টি)</h2>
           <div className="mt-4 space-y-3">
@@ -53,6 +73,8 @@ export default function CourseDetail() {
                 </div>
                 {enrolled ? (
                   <Link to={`/learn/${course.id}/${lesson.id}`} className="shrink-0 rounded-full bg-primary px-4 py-2 text-sm font-bold text-white">দেখুন</Link>
+                ) : lesson.isFree && lesson.demoYoutubeId ? (
+                  <span className="shrink-0 rounded-full bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-800">▶ ফ্রি ডেমো</span>
                 ) : (
                   <span className="shrink-0 rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-muted">🔒 লক</span>
                 )}
@@ -61,7 +83,9 @@ export default function CourseDetail() {
           </div>
           {!enrolled && (
             <p className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm font-semibold text-amber-800">
-              ক্লাসের ভিডিও কেনার আগে দেখা যাবে না। কোর্স কিনে অ্যাডমিনের অ্যাপ্রুভ পেলেই ক্লাস খুলবে।
+              {freeLesson
+                ? 'ফ্রি ডেমো ক্লাসটি ছাড়া বাকি ক্লাসের ভিডিও কেনার আগে দেখা যাবে না। কোর্স কিনে অ্যাডমিনের অ্যাপ্রুভ পেলেই ক্লাস খুলবে।'
+                : 'ক্লাসের ভিডিও কেনার আগে দেখা যাবে না। কোর্স কিনে অ্যাডমিনের অ্যাপ্রুভ পেলেই ক্লাস খুলবে।'}
             </p>
           )}
         </div>

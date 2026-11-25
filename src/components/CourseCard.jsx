@@ -4,6 +4,10 @@ import { useStore } from '../lib/store'
 
 export const bn = (n) => Number(n || 0).toLocaleString('bn-BD')
 
+// ফ্রি ডেমো আছে কি না — শুধু অ্যাডমিন ফ্রি চিহ্ন দেওয়া লেসনেই demoYoutubeId থাকে
+export const hasFreeDemo = (course) =>
+  (course?.lessons || []).some(l => l.isFree && l.demoYoutubeId)
+
 export default function CourseCard({ course }) {
   const { isEnrolled, pendingOrderFor } = useStore()
   const enrolled = isEnrolled(course.id)
@@ -14,9 +18,10 @@ export default function CourseCard({ course }) {
         <CoverArt title={course.title} gradient={course.gradient} imageUrl={course.imageUrl} className="h-40 w-full" />
       </Link>
       <div className="p-5">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-primary">{course.level}</span>
           {course.sample && <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">নমুনা কোর্স</span>}
+          {hasFreeDemo(course) && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">▶ ফ্রি ডেমো আছে</span>}
         </div>
         <Link to={`/courses/${course.id}`}>
           <h3 className="mt-3 text-lg font-bold leading-snug text-ink hover:text-primary">{course.title}</h3>

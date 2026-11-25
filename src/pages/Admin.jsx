@@ -131,12 +131,15 @@ export default function Admin() {
     reader.readAsDataURL(file)
   }
 
-  const startLessonForm = (lesson) => setLessonForm(lesson ? { ...lesson } : { id: `l${Date.now()}`, title: '', duration: '', youtubeId: '', pdfUrl: '', pdfUrl2: '' })
+  const startLessonForm = (lesson) => setLessonForm(lesson ? { ...lesson, isFree: !!lesson.isFree } : { id: `l${Date.now()}`, title: '', duration: '', youtubeId: '', pdfUrl: '', pdfUrl2: '', isFree: false })
 
   const saveLessonForm = async (e) => {
     e.preventDefault()
     if (!lessonCourse) return
-    const lesson = { ...lessonForm, youtubeId: extractYoutubeId(lessonForm.youtubeId) }
+    const vid = extractYoutubeId(lessonForm.youtubeId)
+    // ফ্রি ডেমো হলে এই লেসনের ভিডিও ID পাবলিক ডকে (demoYoutubeId) যাবে —
+    // তাই ইউটিউব লিংকটা এখানে বসানো থাকতে হবে। ফ্রি না হলে কিছুই পাবলিক হয় না।
+    const lesson = { ...lessonForm, youtubeId: vid, isFree: !!lessonForm.isFree, demoYoutubeId: lessonForm.isFree ? vid : '' }
     const lessons = (lessonCourse.lessons || []).some(l => l.id === lesson.id)
       ? lessonCourse.lessons.map(l => l.id === lesson.id ? lesson : l)
       : [...(lessonCourse.lessons || []), lesson]
@@ -296,6 +299,13 @@ export default function Admin() {
                   <div><label className={labelCls}>ক্লাসের নাম</label><input required className={inputCls} value={lessonForm.title} onChange={e => setLessonForm({ ...lessonForm, title: e.target.value })} placeholder="যেমন: বহিপীর" /></div>
                   <div><label className={labelCls}>সময়কাল</label><input className={inputCls} value={lessonForm.duration} onChange={e => setLessonForm({ ...lessonForm, duration: e.target.value })} placeholder="যেমন: ৩০ মিনিট" /></div>
                   <div><label className={labelCls}>ইউটিউব লিংক (পূর্ণ URL বা ভিডিও ID)</label><input className={inputCls} value={lessonForm.youtubeId} onChange={e => setLessonForm({ ...lessonForm, youtubeId: e.target.value })} placeholder="https://www.youtube.com/watch?v=…" /></div>
+                  <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-emerald-50 p-4">
+                    <input type="checkbox" checked={!!lessonForm.isFree} onChange={e => setLessonForm({ ...lessonForm, isFree: e.target.checked })} className="mt-1 h-5 w-5 shrink-0 accent-emerald-600" />
+                    <span>
+                      <span className="block font-bold text-ink">ফ্রি ডেমো ক্লাস হিসেবে দেখান (লগইন ছাড়াই সবাই দেখতে পারবে)</span>
+                      <span className="mt-1 block text-sm text-muted">শুধু এই ক্লাসের ভিডিওটাই সবার জন্য খুলে যাবে — কোর্সের বাকি ক্লাসগুলো কেনা ছাড়া লকই থাকবে। ফ্রি করতে হলে ওপরে ইউটিউব লিংক বসানো থাকতে হবে।</span>
+                    </span>
+                  </label>
                   <div><label className={labelCls}>নোটের PDF লিংক (আপলোড নয়, শুধু লিংক)</label><input className={inputCls} value={lessonForm.pdfUrl} onChange={e => setLessonForm({ ...lessonForm, pdfUrl: e.target.value })} placeholder="https://…" /></div>
                   <div><label className={labelCls}>প্র্যাকটিস সেটের PDF লিংক (ঐচ্ছিক)</label><input className={inputCls} value={lessonForm.pdfUrl2 || ''} onChange={e => setLessonForm({ ...lessonForm, pdfUrl2: e.target.value })} placeholder="https://…" /></div>
                   <div className="flex gap-3">
@@ -308,7 +318,7 @@ export default function Admin() {
                 {(lessonCourse.lessons || []).map((l, i) => (
                   <div key={l.id} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-white p-5 shadow-sm">
                     <div>
-                      <p className="font-bold text-ink">{i + 1}. {l.title}</p>
+                      <p className="font-bold text-ink">{i + 1}. {l.title} {l.isFree && <span className="ml-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800">ফ্রি ডেমো</span>}</p>
                       <p className="text-sm text-muted">{l.duration} • ভিডিও: {l.youtubeId ? 'যুক্ত আছে' : 'লিংক বসানো হয়নি'} • PDF: {l.pdfUrl ? 'যুক্ত আছে' : 'লিংক বসানো হয়নি'}</p>
                     </div>
                     <div className="flex gap-2">

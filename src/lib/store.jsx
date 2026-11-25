@@ -279,7 +279,13 @@ export function StoreProvider({ children }) {
       await setDoc(ref, fields, { merge: true })
       if (lessons) {
         for (const l of lessons) {
-          const { youtubeId, ...lessonFields } = l
+          const { youtubeId, ...rest } = l
+          const isFree = !!l.isFree
+          // ফ্রি ডেমো ক্লাস: শুধু অ্যাডমিন যেটাকে ফ্রি চিহ্ন দিয়েছে, শুধু সেটার
+          // ভিডিও ID-ই পাবলিক লেসন ডকে (demoYoutubeId) যায় — সবাই পড়তে পারে।
+          // ফ্রি নয় এমন লেসনের youtubeId কখনো পাবলিক ডকে যায় না; সেটা শুধু
+          // lessonAccess-এ থাকে, যা শুধু এনরোল করা ইউজার/অ্যাডমিন পড়তে পারে।
+          const lessonFields = { ...rest, isFree, demoYoutubeId: isFree ? (youtubeId || '') : '' }
           await setDoc(doc(db, 'courses', ref.id, 'lessons', l.id), lessonFields, { merge: true })
           // ভিডিও URL আলাদা lessonAccess-এ — শুধু এনরোল করা ইউজারই পড়তে পারে (firestore.rules দেখুন)
           await setDoc(doc(db, 'courses', ref.id, 'lessonAccess', l.id), { youtubeId: youtubeId || '' }, { merge: true })
