@@ -110,12 +110,10 @@ export default function Layout({ children }) {
           <div>
             <h3 className="font-bold">যোগাযোগ</h3>
             <p className="mt-3 text-sm text-white/70">ফোন ও ইমেইল শীঘ্রই যুক্ত হচ্ছে।</p>
-            <p className="mt-4 text-sm text-white/70">CEO: SP Siam Ahmed</p>
-            <p className="text-sm text-white/70">Full Stack Web Developer</p>
           </div>
         </div>
         <div className="border-t border-white/10 py-4 text-center text-xs text-white/50">
-          © {new Date().getFullYear()} বাংলা এডুকেশন — CEO SP Siam Ahmed, Full Stack Web Developer
+          © {new Date().getFullYear()} বাংলা এডুকেশন — Project: NLITH AGENCY
         </div>
       </footer>
     </div>
