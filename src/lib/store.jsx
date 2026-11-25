@@ -34,6 +34,7 @@ function seedDemo() {
     settings: DEFAULT_SETTINGS,
     orders: [],
     enrollments: [],
+    reviews: [],
   }
 }
 
@@ -58,6 +59,7 @@ export function StoreProvider({ children }) {
   const [orders, setOrders] = useState([])
   const [enrollments, setEnrollments] = useState([])
   const [allUsers, setAllUsers] = useState([])
+  const [reviews, setReviews] = useState([])
   const [dataLoading, setDataLoading] = useState(true)
 
   const firebaseMode = isFirebaseConfigured
@@ -93,6 +95,15 @@ export function StoreProvider({ children }) {
           setEnrollments(es.docs.map(d => ({ id: d.id, ...d.data() })))
           const us = await getDocs(collection(db, 'users'))
           setAllUsers(us.docs.map(d => ({ uid: d.id, ...d.data() })))
+          // রিভিউ: নিয়ম (firestore.rules) এখনো কনসোলে প্রকাশ না হলে পড়া যাবে না —
+          // সেক্ষেত্রে খালি রিভিউ দেখাবে, বাকি ডেটা আটকাবে না।
+          try {
+            const rs = await getDocs(collection(db, 'reviews'))
+            setReviews(rs.docs.map(d => ({ id: d.id, ...d.data() })))
+          } catch (e) {
+            console.warn('রিভিউ পড়া যায়নি (নিয়ম প্রকাশ করা হয়নি হয়তো):', e)
+            setReviews([])
+          }
         } catch (e) {
           console.warn('Firebase ডেটা পড়া যায়নি, নমুনা ডেটা দেখানো হচ্ছে:', e)
         }
@@ -102,6 +113,7 @@ export function StoreProvider({ children }) {
         setSettings(demo.settings)
         setOrders(demo.orders)
         setEnrollments(demo.enrollments)
+        setReviews(demo.reviews || [])
         setAllUsers(demo.users.map(({ password, ...u }) => u))
       }
       setDataLoading(false)
@@ -346,16 +358,72 @@ export function StoreProvider({ children }) {
     return lesson?.youtubeId || ''
   }, [firebaseMode, isEnrolled, courses])
 
+  // ---------- Reviews: শুধু এনরোল করা শিক্ষার্থী লিখতে পারে, একজন এক কোর্সে একটাই ----------
+  const reviewsByCourse = useCallback((courseId) => {
+    if (!courseId) return []
+    return reviews
+      .filter(r => r.courseId === courseId)
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+  }, [reviews])
+
+  const averageRating = useCallback((courseId) => {
+    const list = reviews.filter(r => r.courseId === courseId)
+    if (list.length === 0) return null
+    const avg = list.reduce((s, r) => s + (Number(r.rating) || 0), 0) / list.length
+    return Math.round(avg * 10) / 10
+  }, [reviews])
+
+  const submitReview = useCallback(async (courseId, rating, text) => {
+    if (!user) throw new Error('রিভিউ দিতে প্রথমে লগইন করুন।')
+    if (!isEnrolled(courseId)) throw new Error('শুধু এই কোর্স কেনা শিক্ষার্থীরাই রিভিউ দিতে পারে।')
+    const r = Math.round(Number(rating) || 0)
+    if (r < 1 || r > 5) throw new Error('১ থেকে ৫ তারার মধ্যে রেটিং দিন।')
+    const cleanText = (text || '').trim().slice(0, 500)
+    // এক ইউজার এক কোর্সে একটাই রিভিউ — ডক আইডি uid_courseId, আবার দিলে আপডেট হয়
+    const id = `${user.uid}_${courseId}`
+    const review = {
+      courseId, userId: user.uid, userName: user.name || user.email,
+      rating: r, text: cleanText, createdAt: new Date().toISOString(),
+    }
+    if (firebaseMode) {
+      await setDoc(doc(db, 'reviews', id), review, { merge: true })
+    } else {
+      const demo = loadDemo()
+      const list = demo.reviews || []
+      demo.reviews = list.some(x => x.id === id)
+        ? list.map(x => x.id === id ? { ...x, ...review, id } : x)
+        : [...list, { id, ...review }]
+      persistDemo({ reviews: demo.reviews })
+    }
+    setReviews(prev => prev.some(x => x.id === id)
+      ? prev.map(x => x.id === id ? { ...x, ...review, id } : x)
+      : [...prev, { id, ...review }])
+    return id
+  }, [firebaseMode, user, isEnrolled, persistDemo])
+
+  const deleteReview = useCallback(async (reviewId) => {
+    if (!user || user.role !== 'admin') throw new Error('শুধু অ্যাডমিন রিভিউ মুছতে পারে।')
+    if (firebaseMode) { await deleteDoc(doc(db, 'reviews', reviewId)) }
+    else {
+      const demo = loadDemo()
+      demo.reviews = (demo.reviews || []).filter(x => x.id !== reviewId)
+      persistDemo({ reviews: demo.reviews })
+    }
+    setReviews(prev => prev.filter(x => x.id !== reviewId))
+  }, [firebaseMode, user, persistDemo])
+
   const value = useMemo(() => ({
     firebaseMode, user, authLoading, dataLoading,
-    courses, settings, orders, enrollments, allUsers,
+    courses, settings, orders, enrollments, allUsers, reviews,
     register, login, logout, logoutDevice,
     isEnrolled, pendingOrderFor, submitOrder, decideOrder,
     saveCourse, deleteCourse, saveSettings, setUserRole, getLessonVideo,
+    reviewsByCourse, averageRating, submitReview, deleteReview,
     getCourse: (id) => courses.find(c => c.id === id),
-  }), [firebaseMode, user, authLoading, dataLoading, courses, settings, orders, enrollments, allUsers,
+  }), [firebaseMode, user, authLoading, dataLoading, courses, settings, orders, enrollments, allUsers, reviews,
     register, login, logout, logoutDevice, isEnrolled, pendingOrderFor, submitOrder, decideOrder,
-    saveCourse, deleteCourse, saveSettings, setUserRole, getLessonVideo])
+    saveCourse, deleteCourse, saveSettings, setUserRole, getLessonVideo,
+    reviewsByCourse, averageRating, submitReview, deleteReview])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }

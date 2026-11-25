@@ -27,7 +27,7 @@ const GRADIENTS = [
 ]
 
 export default function Admin() {
-  const { user, authLoading, courses, orders, enrollments, allUsers, settings, decideOrder, saveCourse, deleteCourse, saveSettings, setUserRole, logoutDevice } = useStore()
+  const { user, authLoading, courses, orders, enrollments, allUsers, reviews, settings, decideOrder, saveCourse, deleteCourse, saveSettings, setUserRole, logoutDevice, deleteReview } = useStore()
   const [tab, setTab] = useState('dashboard')
   const [msg, setMsg] = useState('')
 
@@ -78,6 +78,7 @@ export default function Admin() {
     ['courses', 'কোর্স'],
     ['lessons', 'ক্লাস'],
     ['users', 'ইউজার'],
+    ['reviews', `রিভিউ (${reviews.length}টি)`],
     ['settings', 'সেটিংস'],
   ]
 
@@ -363,6 +364,27 @@ export default function Admin() {
             </div>
           ))}
           {allUsers.length === 0 && <p className="rounded-3xl bg-white p-8 text-center text-muted shadow-sm">এখনো কোনো ইউজার নেই।</p>}
+        </div>
+      )}
+
+      {tab === 'reviews' && (
+        <div className="mt-6 space-y-3">
+          {reviews.length === 0 && <p className="rounded-3xl bg-white p-8 text-center text-muted shadow-sm">এখনো কোনো রিভিউ জমা পড়েনি।</p>}
+          {reviews.map(r => {
+            const c = courses.find(x => x.id === r.courseId)
+            return (
+              <div key={r.id} className="rounded-3xl bg-white p-5 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-bold text-ink">{c?.title || r.courseId} — <span className="text-amber-600">{'★'.repeat(Math.round(r.rating || 0))}{'☆'.repeat(5 - Math.round(r.rating || 0))}</span></p>
+                    <p className="text-sm text-muted">{r.userName} • {r.createdAt ? new Date(r.createdAt).toLocaleDateString('bn-BD') : ''}</p>
+                    {r.text && <p className="mt-2 text-sm text-ink">{r.text}</p>}
+                  </div>
+                  <button onClick={async () => { if (confirm('এই রিভিউটি মুছে ফেলবেন?')) { await deleteReview(r.id); setMsg('রিভিউ মুছে ফেলা হয়েছে।') } }} className="rounded-full bg-red-50 px-4 py-2 text-sm font-bold text-red-700">মুছুন</button>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 

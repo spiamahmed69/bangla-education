@@ -9,9 +9,11 @@ export const hasFreeDemo = (course) =>
   (course?.lessons || []).some(l => l.isFree && l.demoYoutubeId)
 
 export default function CourseCard({ course }) {
-  const { isEnrolled, pendingOrderFor } = useStore()
+  const { isEnrolled, pendingOrderFor, reviewsByCourse, averageRating } = useStore()
   const enrolled = isEnrolled(course.id)
   const pending = pendingOrderFor(course.id)
+  const avg = averageRating(course.id)
+  const reviewCount = reviewsByCourse(course.id).length
   return (
     <article className="fade-up overflow-hidden rounded-3xl bg-white shadow-[0_8px_30px_rgba(37,99,235,0.08)] transition hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(37,99,235,0.16)]">
       <Link to={`/courses/${course.id}`}>
@@ -28,6 +30,9 @@ export default function CourseCard({ course }) {
         </Link>
         <p className="mt-1 line-clamp-2 text-sm text-muted">{course.description}</p>
         <p className="mt-2 text-sm text-muted">শিক্ষক: {course.teacher} • {course.lessons?.length || 0}টি ক্লাস</p>
+        {avg !== null && (
+          <p className="mt-1 text-sm font-bold text-amber-700">★ {avg.toLocaleString('bn-BD')} • {reviewCount.toLocaleString('bn-BD')}টি রিভিউ</p>
+        )}
         <div className="mt-4 flex items-center justify-between">
           <div>
             <span className="text-xl font-bold text-ink">৳{bn(course.price)}</span>

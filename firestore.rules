@@ -24,6 +24,22 @@ service cloud.firestore {
       }
     }
 
+    // রিভিউ: সবাই পড়তে পারে; লেখে শুধু কোর্স কেনা (এনরোল করা) শিক্ষার্থী —
+    // একজন ইউজার এক কোর্সে একটাই রিভিউ দিতে পারে (আবার দিলে আগেরটা আপডেট হয়)।
+    // নিজের রিভিউ নিজে আপডেট করতে পারে, মুছতে পারে শুধু অ্যাডমিন।
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && isEnrolled(request.resource.data.courseId)
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5;
+      allow update: if signedIn()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
     // পেমেন্ট সেটিংস: সবাই পড়তে পারে (নম্বর দেখানো লাগে), লেখে শুধু অ্যাডমিন
     match /settings/{docId} {
       allow read: if true;

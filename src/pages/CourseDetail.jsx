@@ -1,13 +1,30 @@
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useStore } from '../lib/store'
 import { CoverArt } from '../components/Layout'
 import { bn, hasFreeDemo } from '../components/CourseCard'
 import SecurePlayer from '../components/SecurePlayer'
 
+// তারার চিহ্ন: ৪ দিলে ★★★★☆
+export const starsText = (n) => '★'.repeat(Math.max(0, Math.min(5, Math.round(n || 0)))) + '☆'.repeat(5 - Math.max(0, Math.min(5, Math.round(n || 0))))
+
 export default function CourseDetail() {
   const { id } = useParams()
-  const { getCourse, user, isEnrolled, pendingOrderFor, dataLoading } = useStore()
+  const { getCourse, user, isEnrolled, pendingOrderFor, dataLoading, reviewsByCourse, averageRating, submitReview, deleteReview } = useStore()
   const course = getCourse(id)
+
+  // রিভিউ ফর্মের অবস্থা — হুকগুলো early return-এর আগে থাকতে হবে
+  const [myRating, setMyRating] = useState(0)
+  const [myText, setMyText] = useState('')
+  const [reviewMsg, setReviewMsg] = useState('')
+  const [reviewError, setReviewError] = useState('')
+  const [reviewBusy, setReviewBusy] = useState(false)
+  const courseReviews = course ? reviewsByCourse(course.id) : []
+  const avg = course ? averageRating(course.id) : null
+  const myReview = user ? courseReviews.find(r => r.userId === user.uid) : null
+  useEffect(() => {
+    if (myReview) { setMyRating(myReview.rating || 0); setMyText(myReview.text || '') }
+  }, [myReview?.id])
 
   if (dataLoading) {
     return (
@@ -42,6 +59,11 @@ export default function CourseDetail() {
           <h1 className="mt-4 text-3xl font-bold text-ink">{course.title}</h1>
           <p className="mt-2 text-muted">{course.description}</p>
           <p className="mt-3 text-sm text-muted">শিক্ষক: {course.teacher}{course.sample ? ' (নমুনা)' : ''}</p>
+          {avg !== null ? (
+            <p className="mt-2 text-sm font-bold text-amber-700">★ {avg.toLocaleString('bn-BD')} • {courseReviews.length.toLocaleString('bn-BD')}টি রিভিউ</p>
+          ) : (
+            <p className="mt-2 text-sm text-muted">এখনো কোনো রিভিউ নেই</p>
+          )}
           {hasFreeDemo(course) && <p className="mt-3 text-sm font-bold text-emerald-700">▶ এই কোর্সে ফ্রি ডেমো ক্লাস আছে — কিনে দেখতে পারেন কেমন শেখানো হয়।</p>}
 
           {!enrolled && freeLesson && (
@@ -88,6 +110,75 @@ export default function CourseDetail() {
                 : 'ক্লাসের ভিডিও কেনার আগে দেখা যাবে না। কোর্স কিনে অ্যাডমিনের অ্যাপ্রুভ পেলেই ক্লাস খুলবে।'}
             </p>
           )}
+
+          {/* রিভিউ ও রেটিং — লেখে শুধু কোর্স কেনা শিক্ষার্থী */}
+          <div className="mt-10">
+            <h2 className="text-xl font-bold text-ink">রিভিউ ({courseReviews.length.toLocaleString('bn-BD')}টি)</h2>
+            {courseReviews.length === 0 ? (
+              <p className="mt-3 rounded-2xl bg-white p-5 text-sm text-muted shadow-sm">এখনো কোনো রিভিউ নেই — কোর্সটি কিনে আপনিই প্রথম রিভিউ দিন।</p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {courseReviews.map(r => (
+                  <div key={r.id} className="rounded-2xl bg-white p-5 shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-bold text-ink">{r.userName}</p>
+                      <p className="text-sm text-muted">{r.createdAt ? new Date(r.createdAt).toLocaleDateString('bn-BD') : ''}</p>
+                    </div>
+                    <p className="mt-1 text-amber-600">{starsText(r.rating)}</p>
+                    {r.text && <p className="mt-2 text-sm text-ink">{r.text}</p>}
+                    {user?.role === 'admin' && (
+                      <button
+                        onClick={async () => { if (confirm('এই রিভিউটি মুছে ফেলবেন?')) { await deleteReview(r.id); setReviewMsg('রিভিউ মুছে ফেলা হয়েছে।') } }}
+                        className="mt-3 rounded-full bg-red-50 px-4 py-1.5 text-sm font-bold text-red-700"
+                      >
+                        মুছুন
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {enrolled ? (
+              <form
+                className="mt-5 space-y-4 rounded-3xl bg-white p-6 shadow-sm"
+                onSubmit={async (e) => {
+                  e.preventDefault()
+                  setReviewError(''); setReviewMsg('')
+                  if (myRating < 1) { setReviewError('১ থেকে ৫ তারার মধ্যে রেটিং দিন।'); return }
+                  setReviewBusy(true)
+                  try {
+                    await submitReview(course.id, myRating, myText)
+                    setReviewMsg(myReview ? 'আপনার রিভিউ আপডেট হয়েছে।' : 'আপনার রিভিউ জমা হয়েছে। ধন্যবাদ!')
+                  } catch (err) {
+                    setReviewError(err.message || 'রিভিউ জমা দেওয়া যায়নি। আবার চেষ্টা করুন।')
+                  }
+                  setReviewBusy(false)
+                }}
+              >
+                <h3 className="font-bold text-ink">{myReview ? 'আপনার রিভিউ আপডেট করুন' : 'আপনার রিভিউ দিন'}</h3>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <button key={n} type="button" aria-label={`${n} তারা`} onClick={() => setMyRating(n)}
+                      className={`text-3xl ${n <= myRating ? 'text-amber-500' : 'text-slate-300'}`}>★</button>
+                  ))}
+                </div>
+                <textarea rows="3" maxLength={500} value={myText} onChange={e => setMyText(e.target.value)}
+                  placeholder="কোর্সটি কেমন লাগলো লিখুন…" className="w-full rounded-2xl border border-blue-100 bg-page px-4 py-3 focus:border-primary focus:outline-none" />
+                <p className="text-right text-xs text-muted">{myText.length.toLocaleString('bn-BD')}/৫০০</p>
+                {reviewError && <p className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{reviewError}</p>}
+                {reviewMsg && <p className="rounded-2xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{reviewMsg}</p>}
+                <button disabled={reviewBusy} className="rounded-full bg-primary px-6 py-2.5 font-bold text-white disabled:opacity-60">
+                  {reviewBusy ? 'জমা হচ্ছে…' : myReview ? 'রিভিউ আপডেট করুন' : 'রিভিউ জমা দিন'}
+                </button>
+              </form>
+            ) : (
+              <p className="mt-5 rounded-2xl bg-slate-100 p-4 text-sm font-semibold text-muted">
+                {!user
+                  ? 'রিভিউ দিতে লগইন করে কোর্সটি কিনুন। শুধু কোর্স কেনা শিক্ষার্থীরাই রিভিউ দিতে পারে।'
+                  : 'শুধু এই কোর্স কেনা শিক্ষার্থীরাই রিভিউ দিতে পারে।'}
+              </p>
+            )}
+          </div>
         </div>
 
         <aside>
