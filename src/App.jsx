@@ -13,6 +13,8 @@ import About from './pages/About'
 import Contact from './pages/Contact'
 import Faq from './pages/Faq'
 import RefundPolicy from './pages/RefundPolicy'
+import Certificate from './pages/Certificate'
+import Quiz from './pages/Quiz'
 
 function NotFound() {
   return (
@@ -40,6 +42,8 @@ export default function App() {
             <Route path="/my-courses" element={<MyCourses />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/about" element={<About />} />
+            <Route path="/certificate/:courseId" element={<Certificate />} />
+            <Route path="/quiz/:courseId" element={<Quiz />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/faq" element={<Faq />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />

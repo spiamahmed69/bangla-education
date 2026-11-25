@@ -36,6 +36,8 @@ function seedDemo() {
     enrollments: [],
     reviews: [],
     coupons: [],
+    progress: [],
+    quizzes: {},
   }
 }
 
@@ -62,6 +64,8 @@ export function StoreProvider({ children }) {
   const [allUsers, setAllUsers] = useState([])
   const [reviews, setReviews] = useState([])
   const [coupons, setCoupons] = useState([])
+  const [progress, setProgress] = useState([])
+  const [quizzes, setQuizzes] = useState({})
   const [dataLoading, setDataLoading] = useState(true)
 
   const firebaseMode = isFirebaseConfigured
@@ -132,6 +136,8 @@ export function StoreProvider({ children }) {
         setEnrollments(demo.enrollments)
         setReviews(demo.reviews || [])
         setCoupons(demo.coupons || [])
+        setProgress(demo.progress || [])
+        setQuizzes(demo.quizzes || {})
         setAllUsers(demo.users.map(({ password, ...u }) => u))
       }
       setDataLoading(false)
@@ -165,6 +171,26 @@ export function StoreProvider({ children }) {
     } catch { /* ignore */ }
     setAuthLoading(false)
   }, [firebaseMode])
+
+  // ---------- Progress: লগইন হওয়ার পর নিজের প্রোগ্রেস পড়া ----------
+  // নিয়ম (firestore.rules) এখনো কনসোলে প্রকাশ না হলে পড়া যাবে না —
+  // সেক্ষেত্রে প্রোগ্রেস খালি দেখাবে, বাকি ডেটা আটকাবে না।
+  useEffect(() => {
+    if (!firebaseMode) return
+    if (!user) { setProgress([]); return }
+    let alive = true
+    const load = async () => {
+      try {
+        const ps = await getDocs(query(collection(db, 'progress'), where('userId', '==', user.uid)))
+        if (alive) setProgress(ps.docs.map(d => ({ id: d.id, ...d.data() })))
+      } catch (e) {
+        console.warn('প্রোগ্রেস পড়া যায়নি (নিয়ম প্রকাশ করা হয়নি হয়তো):', e)
+        if (alive) setProgress([])
+      }
+    }
+    load()
+    return () => { alive = false }
+  }, [firebaseMode, user])
 
   const enforceDeviceLimit = useCallback(async (profile) => {
     const deviceId = getDeviceId()
@@ -425,6 +451,112 @@ export function StoreProvider({ children }) {
     setCoupons(prev => prev.filter(c => c.code !== upper))
   }, [firebaseMode, user, persistDemo])
 
+  // ---------- Progress: শিক্ষার্থী নিজে ক্লাস "সম্পন্ন" চিহ্ন দেয় ----------
+  // ভিডিও দেখা স্বয়ংক্রিয়ভাবে মাপা হয় না — YouTube প্লেয়ার দিয়ে নির্ভরযোগ্যভাবে
+  // দেখা প্রমাণ করা যায় না, তাই হাতে টিক দেওয়ার ব্যবস্থাই সৎ উপায়।
+  const completedLessonIds = useCallback((courseId) => {
+    if (!user) return []
+    const p = progress.find(x => x.userId === user.uid && x.courseId === courseId)
+    return p?.completedLessonIds || []
+  }, [user, progress])
+
+  const progressPct = useCallback((courseId, totalLessons) => {
+    const total = Number(totalLessons) || 0
+    if (total === 0) return 0
+    return Math.round((completedLessonIds(courseId).length / total) * 100)
+  }, [completedLessonIds])
+
+  const toggleLessonComplete = useCallback(async (courseId, lessonId) => {
+    if (!user) throw new Error('প্রোগ্রেস রাখতে প্রথমে লগইন করুন।')
+    if (!isEnrolled(courseId)) throw new Error('শুধু এই কোর্স কেনা শিক্ষার্থীরাই প্রোগ্রেস রাখতে পারে।')
+    const current = completedLessonIds(courseId)
+    const next = current.includes(lessonId)
+      ? current.filter(id => id !== lessonId)
+      : [...current, lessonId]
+    const id = `${user.uid}_${courseId}`
+    const entry = { userId: user.uid, courseId, completedLessonIds: next, updatedAt: new Date().toISOString() }
+    if (firebaseMode) {
+      await setDoc(doc(db, 'progress', id), entry, { merge: true })
+    } else {
+      const demo = loadDemo()
+      const list = demo.progress || []
+      demo.progress = list.some(x => x.id === id)
+        ? list.map(x => x.id === id ? { ...x, ...entry, id } : x)
+        : [...list, { id, ...entry }]
+      persistDemo({ progress: demo.progress })
+    }
+    setProgress(prev => prev.some(x => x.id === id)
+      ? prev.map(x => x.id === id ? { ...x, ...entry, id } : x)
+      : [...prev, { id, ...entry }])
+    return next
+  }, [firebaseMode, user, isEnrolled, completedLessonIds, persistDemo])
+
+  const progressUpdatedAt = useCallback((courseId) => {
+    if (!user) return null
+    const p = progress.find(x => x.userId === user.uid && x.courseId === courseId)
+    return p?.updatedAt || null
+  }, [user, progress])
+
+  // ---------- Quizzes: পড়ে শুধু এনরোল করা শিক্ষার্থী/অ্যাডমিন, বানায় শুধু অ্যাডমিন ----------
+  // কুইজের উত্তর ইতিহাস এই ব্যাচে সংরক্ষণ করা হয় না — স্কোর সাথে সাথে দেখানো হয়।
+  const getQuiz = useCallback(async (courseId) => {
+    if (!courseId) return null
+    if (quizzes[courseId] !== undefined) return quizzes[courseId]
+    if (!isEnrolled(courseId) && user?.role !== 'admin') return null
+    if (firebaseMode) {
+      try {
+        const snap = await getDoc(doc(db, 'quizzes', courseId))
+        const quiz = snap.exists() ? { id: snap.id, ...snap.data() } : null
+        setQuizzes(prev => ({ ...prev, [courseId]: quiz }))
+        return quiz
+      } catch {
+        return null
+      }
+    }
+    const demo = loadDemo()
+    const quiz = (demo.quizzes || {})[courseId] || null
+    setQuizzes(prev => ({ ...prev, [courseId]: quiz }))
+    return quiz
+  }, [firebaseMode, isEnrolled, user, quizzes])
+
+  const saveQuiz = useCallback(async (courseId, questions) => {
+    if (!user || user.role !== 'admin') throw new Error('শুধু অ্যাডমিন কুইজ বানাতে পারে।')
+    if (!courseId) throw new Error('কোর্স বেছে নিন।')
+    const clean = (questions || []).map(q => ({
+      q: (q.q || '').trim(),
+      options: (q.options || []).slice(0, 4).map(o => (o || '').trim()),
+      answerIndex: Number(q.answerIndex) || 0,
+    }))
+    for (const q of clean) {
+      if (!q.q) throw new Error('সব প্রশ্নে প্রশ্নের লেখা থাকতে হবে।')
+      if (q.options.length !== 4 || q.options.some(o => !o)) throw new Error('প্রতিটি প্রশ্নে ঠিক ৪টি অপশন থাকতে হবে।')
+      if (q.answerIndex < 0 || q.answerIndex > 3) throw new Error('সঠিক উত্তরের নম্বর ভুল।')
+    }
+    const quiz = { courseId, questions: clean, updatedAt: new Date().toISOString() }
+    if (firebaseMode) {
+      await setDoc(doc(db, 'quizzes', courseId), quiz, { merge: true })
+    } else {
+      const demo = loadDemo()
+      demo.quizzes = { ...(demo.quizzes || {}), [courseId]: { id: courseId, ...quiz } }
+      persistDemo({ quizzes: demo.quizzes })
+    }
+    setQuizzes(prev => ({ ...prev, [courseId]: { id: courseId, ...quiz } }))
+    return courseId
+  }, [firebaseMode, user, persistDemo])
+
+  const deleteQuiz = useCallback(async (courseId) => {
+    if (!user || user.role !== 'admin') throw new Error('শুধু অ্যাডমিন কুইজ মুছতে পারে।')
+    if (firebaseMode) { await deleteDoc(doc(db, 'quizzes', courseId)) }
+    else {
+      const demo = loadDemo()
+      const next = { ...(demo.quizzes || {}) }
+      delete next[courseId]
+      demo.quizzes = next
+      persistDemo({ quizzes: next })
+    }
+    setQuizzes(prev => { const next = { ...prev }; delete next[courseId]; return next })
+  }, [firebaseMode, user, persistDemo])
+
   // ---------- Lesson access: ভিডিও URL শুধু এনরোল করা ইউজারের জন্য ----------
   const getLessonVideo = useCallback(async (courseId, lessonId) => {
     if (!isEnrolled(courseId)) return null
@@ -495,18 +627,22 @@ export function StoreProvider({ children }) {
 
   const value = useMemo(() => ({
     firebaseMode, user, authLoading, dataLoading,
-    courses, settings, orders, enrollments, allUsers, reviews, coupons,
+    courses, settings, orders, enrollments, allUsers, reviews, coupons, progress, quizzes,
     register, login, logout, logoutDevice,
     isEnrolled, pendingOrderFor, submitOrder, decideOrder,
     saveCourse, deleteCourse, saveSettings, setUserRole, getLessonVideo,
     reviewsByCourse, averageRating, submitReview, deleteReview,
     validateCoupon, saveCoupon, deleteCoupon,
+    completedLessonIds, progressPct, toggleLessonComplete, progressUpdatedAt,
+    getQuiz, saveQuiz, deleteQuiz,
     getCourse: (id) => courses.find(c => c.id === id),
-  }), [firebaseMode, user, authLoading, dataLoading, courses, settings, orders, enrollments, allUsers, reviews, coupons,
+  }), [firebaseMode, user, authLoading, dataLoading, courses, settings, orders, enrollments, allUsers, reviews, coupons, progress, quizzes,
     register, login, logout, logoutDevice, isEnrolled, pendingOrderFor, submitOrder, decideOrder,
     saveCourse, deleteCourse, saveSettings, setUserRole, getLessonVideo,
     reviewsByCourse, averageRating, submitReview, deleteReview,
-    validateCoupon, saveCoupon, deleteCoupon])
+    validateCoupon, saveCoupon, deleteCoupon,
+    completedLessonIds, progressPct, toggleLessonComplete, progressUpdatedAt,
+    getQuiz, saveQuiz, deleteQuiz])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }

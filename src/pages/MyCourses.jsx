@@ -1,10 +1,26 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../lib/store'
 import CourseCard from '../components/CourseCard'
 import { bn } from '../components/CourseCard'
 
 export default function MyCourses() {
-  const { user, authLoading, courses, orders, enrollments } = useStore()
+  const { user, authLoading, courses, orders, enrollments, completedLessonIds, progressPct, getQuiz } = useStore()
+  const [quizMap, setQuizMap] = useState({})
+
+  const myEnrollments = enrollments.filter(e => e.userId === user?.uid && e.status === 'active')
+  const myCourses = courses.filter(c => myEnrollments.some(e => e.courseId === c.id))
+
+  useEffect(() => {
+    let alive = true
+    myCourses.forEach(c => {
+      getQuiz(c.id).then(q => {
+        if (alive && q && (q.questions || []).length) setQuizMap(prev => ({ ...prev, [c.id]: true }))
+      })
+    })
+    return () => { alive = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myCourses.map(c => c.id).join(',')])
 
   if (authLoading) {
     return (
@@ -22,8 +38,6 @@ export default function MyCourses() {
     )
   }
 
-  const myEnrollments = enrollments.filter(e => e.userId === user.uid && e.status === 'active')
-  const myCourses = courses.filter(c => myEnrollments.some(e => e.courseId === c.id))
   const myOrders = orders.filter(o => o.userId === user.uid).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
 
   return (
@@ -39,7 +53,29 @@ export default function MyCourses() {
         </div>
       ) : (
         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {myCourses.map(c => <CourseCard key={c.id} course={c} />)}
+          {myCourses.map(c => {
+            const total = c.lessons?.length || 0
+            const done = completedLessonIds(c.id).length
+            const pct = progressPct(c.id, total)
+            const complete = total > 0 && done === total
+            return (
+              <div key={c.id}>
+                <CourseCard course={c} />
+                <div className="mt-3 rounded-3xl bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-bold text-ink">অগ্রগতি — {done.toLocaleString('bn-BD')}/{total.toLocaleString('bn-BD')}টি ক্লাস ({pct.toLocaleString('bn-BD')}%)</p>
+                  </div>
+                  <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {complete && <Link to={`/certificate/${c.id}`} className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white">🎓 সার্টিফিকেট ডাউনলোড</Link>}
+                    {quizMap[c.id] && <Link to={`/quiz/${c.id}`} className="rounded-full bg-cta px-4 py-2 text-sm font-bold text-white">📝 কুইজ দিন</Link>}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 

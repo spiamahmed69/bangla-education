@@ -27,7 +27,7 @@ const GRADIENTS = [
 ]
 
 export default function Admin() {
-  const { user, authLoading, courses, orders, enrollments, allUsers, reviews, coupons, settings, decideOrder, saveCourse, deleteCourse, saveSettings, setUserRole, logoutDevice, deleteReview, saveCoupon, deleteCoupon } = useStore()
+  const { user, authLoading, courses, orders, enrollments, allUsers, reviews, coupons, settings, decideOrder, saveCourse, deleteCourse, saveSettings, setUserRole, logoutDevice, deleteReview, saveCoupon, deleteCoupon, getQuiz, saveQuiz, deleteQuiz } = useStore()
   const [tab, setTab] = useState('dashboard')
   const [msg, setMsg] = useState('')
 
@@ -39,6 +39,11 @@ export default function Admin() {
   const [settingsForm, setSettingsForm] = useState(null)
   const [couponForm, setCouponForm] = useState(null)
   const [couponError, setCouponError] = useState('')
+  const [quizCourseId, setQuizCourseId] = useState('')
+  const [quizQuestions, setQuizQuestions] = useState(null)
+  const [quizError, setQuizError] = useState('')
+  const [qForm, setQForm] = useState({ q: '', options: ['', '', '', ''], answerIndex: 0 })
+  const [qEditIdx, setQEditIdx] = useState(-1)
 
   if (authLoading) {
     return (
@@ -82,6 +87,7 @@ export default function Admin() {
     ['users', 'ইউজার'],
     ['reviews', `রিভিউ (${reviews.length}টি)`],
     ['coupons', `কুপন (${coupons.length}টি)`],
+    ['quizzes', 'কুইজ'],
     ['settings', 'সেটিংস'],
   ]
 
@@ -182,6 +188,49 @@ export default function Admin() {
   }
 
   const couponLabel = (c) => c.discountType === 'fixed' ? `৳${bn(c.value)} ছাড়` : `${bn(c.value)}% ছাড়`
+
+  // কুইজ পরিচালনা — কোর্স বেছে নিলে তার কুইজ লোড হয়; প্রশ্ন যোগ/সম্পাদনা/মোছা
+  // সাথে সাথে সংরক্ষণ হয়। কোনো ভুয়া প্রশ্ন বানানো হয় না — কুইজ খালি থাকে।
+  const loadQuizForCourse = async (courseId) => {
+    setQuizCourseId(courseId)
+    setQuizQuestions(null)
+    setQuizError('')
+    setQForm({ q: '', options: ['', '', '', ''], answerIndex: 0 })
+    setQEditIdx(-1)
+    if (!courseId) return
+    const quiz = await getQuiz(courseId)
+    setQuizQuestions(quiz ? (quiz.questions || []) : [])
+  }
+
+  const persistQuizQuestions = async (next) => {
+    setQuizError('')
+    try {
+      await saveQuiz(quizCourseId, next)
+      setQuizQuestions(next)
+      setMsg('কুইজ সংরক্ষণ হয়েছে।')
+    } catch (err) {
+      setQuizError(err.message || 'কুইজ সংরক্ষণ যায়নি।')
+    }
+  }
+
+  const saveQForm = async (e) => {
+    e.preventDefault()
+    const q = { q: qForm.q.trim(), options: qForm.options.map(o => o.trim()), answerIndex: Number(qForm.answerIndex) || 0 }
+    if (!q.q) { setQuizError('প্রশ্নের লেখা দিতে হবে।'); return }
+    if (q.options.some(o => !o)) { setQuizError('৪টি অপশনের সবগুলো লিখতে হবে।'); return }
+    const next = qEditIdx >= 0
+      ? quizQuestions.map((x, i) => i === qEditIdx ? q : x)
+      : [...(quizQuestions || []), q]
+    await persistQuizQuestions(next)
+    setQForm({ q: '', options: ['', '', '', ''], answerIndex: 0 })
+    setQEditIdx(-1)
+  }
+
+  const startQEdit = (idx) => {
+    const q = quizQuestions[idx]
+    setQForm({ q: q.q, options: [...q.options], answerIndex: q.answerIndex })
+    setQEditIdx(idx)
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-10">
@@ -453,6 +502,64 @@ export default function Admin() {
             ))}
             {coupons.length === 0 && <p className="rounded-3xl bg-white p-8 text-center text-muted shadow-sm">এখনো কোনো কুপন বানানো হয়নি।</p>}
           </div>
+        </div>
+      )}
+
+      {tab === 'quizzes' && (
+        <div className="mt-6">
+          <label className={labelCls}>কোর্স বেছে নিন</label>
+          <select className={inputCls} value={quizCourseId} onChange={e => loadQuizForCourse(e.target.value)}>
+            <option value="">— কোর্স বেছে নিন —</option>
+            {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+          </select>
+          {quizCourseId && quizQuestions !== null && (
+            <>
+              <p className="mt-3 text-sm text-muted">এই কোর্সের কুইজ শুধু কোর্স কেনা শিক্ষার্থীরাই দিতে পারবে। প্রশ্ন যোগ/সম্পাদনা/মোছা সাথে সাথে সংরক্ষণ হয়।</p>
+              <form onSubmit={saveQForm} className="mt-4 space-y-4 rounded-3xl bg-white p-6 shadow-sm">
+                <h2 className="font-bold text-ink">{qEditIdx >= 0 ? 'প্রশ্ন সম্পাদনা' : 'নতুন প্রশ্ন'}</h2>
+                <div><label className={labelCls}>প্রশ্ন</label><textarea rows="2" required className={inputCls} value={qForm.q} onChange={e => setQForm({ ...qForm, q: e.target.value })} placeholder="যেমন: বহিপীর নাটকের রচয়িতা কে?" /></div>
+                {qForm.options.map((opt, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <label className="flex shrink-0 cursor-pointer items-center gap-1 text-sm font-bold text-ink">
+                      <input type="radio" name="q-answer" checked={qForm.answerIndex === i} onChange={() => setQForm({ ...qForm, answerIndex: i })} className="h-4 w-4 accent-emerald-600" />
+                      সঠিক
+                    </label>
+                    <input required className={inputCls} value={opt} onChange={e => setQForm({ ...qForm, options: qForm.options.map((o, j) => j === i ? e.target.value : o) })} placeholder={`অপশন ${i + 1}`} />
+                  </div>
+                ))}
+                <p className="text-xs text-muted">“সঠিক” টিক দেওয়া অপশনটিই সঠিক উত্তর হিসেবে ধরা হবে।</p>
+                {quizError && <p className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{quizError}</p>}
+                <div className="flex gap-3">
+                  <button className="rounded-full bg-primary px-6 py-2.5 font-bold text-white">{qEditIdx >= 0 ? 'প্রশ্ন আপডেট করুন' : 'প্রশ্ন যোগ করুন'}</button>
+                  {qEditIdx >= 0 && <button type="button" onClick={() => { setQForm({ q: '', options: ['', '', '', ''], answerIndex: 0 }); setQEditIdx(-1) }} className="rounded-full bg-slate-100 px-6 py-2.5 font-bold text-ink">বাতিল</button>}
+                </div>
+              </form>
+              <div className="mt-4 space-y-3">
+                {quizQuestions.map((q, i) => (
+                  <div key={i} className="rounded-3xl bg-white p-5 shadow-sm">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-ink">{i + 1}. {q.q}</p>
+                        <ul className="mt-2 space-y-1 text-sm text-muted">
+                          {q.options.map((o, oi) => (
+                            <li key={oi}>{oi + 1}. {o}{oi === q.answerIndex ? ' ✓ সঠিক উত্তর' : ''}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => startQEdit(i)} className="rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-primary">সম্পাদনা</button>
+                        <button onClick={() => { if (confirm('এই প্রশ্নটি মুছে ফেলবেন?')) persistQuizQuestions(quizQuestions.filter((_, j) => j !== i)) }} className="rounded-full bg-red-50 px-4 py-2 text-sm font-bold text-red-700">মুছুন</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {quizQuestions.length === 0 && <p className="rounded-3xl bg-white p-8 text-center text-muted shadow-sm">এই কোর্সে এখনো কোনো কুইজ নেই — ওপরে প্রথম প্রশ্নটি যোগ করুন।</p>}
+                {quizQuestions.length > 0 && (
+                  <button onClick={() => { if (confirm('এই কোর্সের পুরো কুইজটি মুছে ফেলবেন?')) { deleteQuiz(quizCourseId); setQuizQuestions([]); setMsg('কুইজ মুছে ফেলা হয়েছে।') } }} className="rounded-full bg-red-50 px-5 py-2.5 font-bold text-red-700">পুরো কুইজ মুছে ফেলুন</button>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
 

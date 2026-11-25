@@ -10,8 +10,9 @@ export const starsText = (n) => '★'.repeat(Math.max(0, Math.min(5, Math.round(
 
 export default function CourseDetail() {
   const { id } = useParams()
-  const { getCourse, user, isEnrolled, pendingOrderFor, dataLoading, reviewsByCourse, averageRating, submitReview, deleteReview } = useStore()
+  const { getCourse, user, isEnrolled, pendingOrderFor, dataLoading, reviewsByCourse, averageRating, submitReview, deleteReview, completedLessonIds, progressPct, getQuiz } = useStore()
   const course = getCourse(id)
+  const [quizExists, setQuizExists] = useState(false)
 
   // রিভিউ ফর্মের অবস্থা — হুকগুলো early return-এর আগে থাকতে হবে
   const [myRating, setMyRating] = useState(0)
@@ -25,6 +26,13 @@ export default function CourseDetail() {
   useEffect(() => {
     if (myReview) { setMyRating(myReview.rating || 0); setMyText(myReview.text || '') }
   }, [myReview?.id])
+  const enrolledEarly = user ? isEnrolled(id) : false
+  useEffect(() => {
+    let alive = true
+    if (!enrolledEarly) return
+    getQuiz(id).then(q => { if (alive) setQuizExists(!!(q && (q.questions || []).length)) })
+    return () => { alive = false }
+  }, [enrolledEarly, id])
 
   if (dataLoading) {
     return (
@@ -65,6 +73,25 @@ export default function CourseDetail() {
             <p className="mt-2 text-sm text-muted">এখনো কোনো রিভিউ নেই</p>
           )}
           {hasFreeDemo(course) && <p className="mt-3 text-sm font-bold text-emerald-700">▶ এই কোর্সে ফ্রি ডেমো ক্লাস আছে — কিনে দেখতে পারেন কেমন শেখানো হয়।</p>}
+          {enrolled && (() => {
+            const total = course.lessons?.length || 0
+            const done = completedLessonIds(course.id).length
+            const pct = progressPct(course.id, total)
+            const complete = total > 0 && done === total
+            return (
+              <div className="mt-5 rounded-3xl bg-white p-5 shadow-sm">
+                <p className="font-bold text-ink">আপনার অগ্রগতি — {done.toLocaleString('bn-BD')}/{total.toLocaleString('bn-BD')}টি ক্লাস ({pct.toLocaleString('bn-BD')}%)</p>
+                <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {complete && <Link to={`/certificate/${course.id}`} className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white">🎓 সার্টিফিকেট ডাউনলোড</Link>}
+                  {quizExists && <Link to={`/quiz/${course.id}`} className="rounded-full bg-cta px-4 py-2 text-sm font-bold text-white">📝 কুইজ দিন</Link>}
+                </div>
+                {complete && <p className="mt-3 text-sm font-bold text-emerald-700">অভিনন্দন! সব ক্লাস শেষ — সার্টিফিকেট ডাউনলোড করতে পারেন।</p>}
+              </div>
+            )
+          })()}
 
           {!enrolled && freeLesson && (
             <div className="mt-8">

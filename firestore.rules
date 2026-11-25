@@ -40,6 +40,24 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // প্রোগ্রেস: নিজেরটাই পড়ে/লেখে; অ্যাডমিন সব পড়তে পারে।
+    // ডক আইডি uid_courseId, completedLessonIds-এ হাতে চিহ্ন দেওয়া শেষ ক্লাসগুলো থাকে —
+    // ভিডিও দেখা স্বয়ংক্রিয়ভাবে মাপা হয় না, শিক্ষার্থী নিজে "সম্পন্ন" টিক দেয়।
+    // নিয়ম ফাইল বদলালেই চালু হয় না — firestore.rules Firebase কনসোলে Publish করতে হবে।
+    match /progress/{progressId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // কুইজ: পড়তে পারে শুধু কোর্স কেনা (এনরোল করা) শিক্ষার্থী আর অ্যাডমিন;
+    // বানায়/বদলায়/মুছে শুধু অ্যাডমিন। কুইজ খালি থাকলে অ্যাডমিন বানাতে হবে।
+    match /quizzes/{courseId} {
+      allow read: if isAdmin() || isEnrolled(courseId);
+      allow write: if isAdmin();
+    }
+
     // কুপন: সবাই পড়তে পারে (চেকআউটে যাচাই করতে হয়), লেখে/বদলায়/মুছে শুধু অ্যাডমিন।
     // কুপনের ফাইল বদলালেই নিয়ম চালু হয় না — firestore.rules Firebase কনসোলে
     // Publish করতে হবে, নইলে লাইভে কুপন পড়া/লেখা permission-denied হবে।

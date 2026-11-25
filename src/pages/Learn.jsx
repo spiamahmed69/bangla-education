@@ -7,13 +7,28 @@ import SecurePlayer from '../components/SecurePlayer'
 // কেনা হয়নি এমন ইউজারের কাছে iframe তো দূরের কথা, ভিডিওর লিংকও পৌঁছায় না।
 export default function Learn() {
   const { courseId, lessonId } = useParams()
-  const { getCourse, user, isEnrolled, getLessonVideo, authLoading, dataLoading } = useStore()
+  const { getCourse, user, isEnrolled, getLessonVideo, authLoading, dataLoading, completedLessonIds, toggleLessonComplete, progressPct, getQuiz } = useStore()
   const [youtubeId, setYoutubeId] = useState(null)
   const [loadingVideo, setLoadingVideo] = useState(true)
+  const [quizExists, setQuizExists] = useState(false)
+  const [toggleBusy, setToggleBusy] = useState(false)
+  const [toggleError, setToggleError] = useState('')
 
   const course = getCourse(courseId)
   const lesson = course?.lessons?.find(l => l.id === lessonId)
   const enrolled = isEnrolled(courseId)
+  const doneIds = enrolled ? completedLessonIds(courseId) : []
+  const totalLessons = course?.lessons?.length || 0
+  const pct = enrolled ? progressPct(courseId, totalLessons) : 0
+  const isDone = doneIds.includes(lessonId)
+  const isComplete = totalLessons > 0 && doneIds.length === totalLessons
+
+  useEffect(() => {
+    let alive = true
+    if (!enrolled) return
+    getQuiz(courseId).then(q => { if (alive) setQuizExists(!!(q && (q.questions || []).length)) })
+    return () => { alive = false }
+  }, [enrolled, courseId])
 
   useEffect(() => {
     let alive = true
@@ -86,6 +101,35 @@ export default function Learn() {
         )}
       </div>
 
+      {/* প্রোগ্রেস — শিক্ষার্থী নিজে ক্লাসটি "সম্পন্ন" বলে চিহ্নিত করে; ভিডিও দেখা স্বয়ংক্রিয়ভাবে মাপা হয় না */}
+      <div className="mt-6 rounded-3xl bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="font-bold text-ink">আপনার অগ্রগতি — {doneIds.length.toLocaleString('bn-BD')}/{totalLessons.toLocaleString('bn-BD')}টি ক্লাস ({pct.toLocaleString('bn-BD')}%)</p>
+          {isComplete && <Link to={`/certificate/${course.id}`} className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white">🎓 সার্টিফিকেট ডাউনলোড</Link>}
+        </div>
+        <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-100">
+          <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button
+            disabled={toggleBusy}
+            onClick={async () => {
+              setToggleError('')
+              setToggleBusy(true)
+              try { await toggleLessonComplete(courseId, lessonId) }
+              catch (err) { setToggleError(err.message || 'চিহ্ন দেওয়া যায়নি। আবার চেষ্টা করুন।') }
+              setToggleBusy(false)
+            }}
+            className={`rounded-full px-5 py-2.5 font-bold text-white disabled:opacity-60 ${isDone ? 'bg-emerald-600' : 'bg-primary'}`}
+          >
+            {isDone ? '✓ এই ক্লাসটি সম্পন্ন হয়েছে' : 'এই ক্লাসটি সম্পন্ন হয়েছে বলে চিহ্নিত করুন'}
+          </button>
+          {quizExists && <Link to={`/quiz/${course.id}`} className="rounded-full bg-cta px-5 py-2.5 font-bold text-white">📝 কুইজ দিন</Link>}
+        </div>
+        {toggleError && <p className="mt-3 text-sm font-semibold text-red-700">{toggleError}</p>}
+        {isComplete && <p className="mt-3 text-sm font-bold text-emerald-700">অভিনন্দন! সব ক্লাস শেষ — সার্টিফিকেট ডাউনলোড করতে পারেন।</p>}
+      </div>
+
       <div className="mt-5 flex flex-wrap gap-3">
         {lesson.pdfUrl ? (
           <a href={lesson.pdfUrl} target="_blank" rel="noreferrer" className="rounded-full bg-primary px-6 py-3 font-bold text-white hover:bg-primary-dark">📄 নোটের PDF ডাউনলোড</a>
@@ -103,7 +147,7 @@ export default function Learn() {
       <div className="mt-4 space-y-2">
         {course.lessons.map((l, i) => (
           <Link key={l.id} to={`/learn/${course.id}/${l.id}`} className={`flex items-center justify-between rounded-2xl p-4 shadow-sm ${l.id === lessonId ? 'bg-blue-50 ring-2 ring-primary' : 'bg-white'}`}>
-            <span className="font-bold text-ink">{i + 1}. {l.title}</span>
+            <span className="font-bold text-ink">{doneIds.includes(l.id) ? '✓ ' : ''}{i + 1}. {l.title}</span>
             <span className="text-sm text-muted">{l.duration}</span>
           </Link>
         ))}
