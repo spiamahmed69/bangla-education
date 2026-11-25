@@ -18,7 +18,7 @@ function ThemeToggle() {
       onClick={() => setDark(d => !d)}
       aria-label={dark ? 'হালকা মোডে যান' : 'ডার্ক মোডে যান'}
       title={dark ? 'হালকা মোড' : 'ডার্ক মোড'}
-      className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-lg hover:bg-blue-100 dark:bg-slate-700 dark:hover:bg-slate-600"
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-base hover:bg-blue-100 dark:bg-slate-700 dark:hover:bg-slate-600 sm:h-10 sm:w-10 sm:text-lg"
     >
       {dark ? '☀️' : '🌙'}
     </button>
@@ -64,18 +64,18 @@ export default function Layout({ children }) {
   const navigate = useNavigate()
   const onLogout = async () => { await logout(); navigate('/') }
   const linkCls = ({ isActive }) =>
-    `px-4 py-2 rounded-full text-sm font-semibold transition ${isActive ? 'bg-primary text-white' : 'text-ink hover:bg-blue-50 dark:text-slate-100 dark:hover:bg-slate-700'}`
+    `whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition ${isActive ? 'bg-primary text-white' : 'text-ink hover:bg-blue-50 dark:text-slate-100 dark:hover:bg-slate-700'}`
 
   return (
     <div className="min-h-screen flex flex-col bg-page dark:bg-slate-900 text-ink dark:bg-slate-950 dark:text-slate-100">
       <DemoBanner firebaseMode={firebaseMode} />
       {/* পিল ন্যাভবার */}
-      <header className="sticky top-3 z-40 px-3 sm:px-6">
-        <div className="glass mx-auto flex max-w-6xl items-center justify-between gap-2 rounded-full px-3 py-2 sm:px-5">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-cyanx text-lg font-bold text-white">বা</span>
+      <header className="sticky top-2 z-40 px-2 sm:top-3 sm:px-6">
+        <div className="glass mx-auto flex max-w-6xl items-center justify-between gap-1 rounded-full px-2 py-2 sm:gap-2 sm:px-5">
+          <Link to="/" className="flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-cyanx text-sm font-bold text-white sm:h-10 sm:w-10 sm:rounded-2xl sm:text-lg">বা</span>
             <span className="leading-tight">
-              <span className="block text-base font-bold text-ink dark:text-slate-100 sm:text-lg">বাংলা এডুকেশন</span>
+              <span className="block whitespace-nowrap text-xs font-bold text-ink min-[360px]:text-sm dark:text-slate-100 sm:text-lg">বাংলা এডুকেশন</span>
               <span className="hidden text-[11px] font-medium text-muted dark:text-slate-400 sm:block">অনলাইনে শিখুন বাংলায়</span>
             </span>
           </Link>
@@ -88,10 +88,10 @@ export default function Layout({ children }) {
             {user?.role === 'admin' && <NavLink to="/admin" className={linkCls}>অ্যাডমিন</NavLink>}
             {user?.role === 'teacher' && <NavLink to="/teacher" className={linkCls}>শিক্ষক প্যানেল</NavLink>}
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <ThemeToggle />
             {user && (
-              <Link to="/notifications" className="relative flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 dark:bg-slate-700 text-lg hover:bg-blue-100" aria-label="নোটিফিকেশন">
+              <Link to="/notifications" className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 dark:bg-slate-700 text-base hover:bg-blue-100 sm:h-10 sm:w-10 sm:text-lg" aria-label="নোটিফিকেশন">
                 🔔
                 {unreadNotifications > 0 && (
                   <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[11px] font-bold text-white">{unreadNotifications > 9 ? '৯+' : unreadNotifications}</span>
@@ -101,12 +101,12 @@ export default function Layout({ children }) {
             {user ? (
               <>
                 <span className="hidden max-w-32 truncate text-sm font-semibold text-ink dark:text-slate-100 lg:block">{user.name}</span>
-                <button onClick={onLogout} className="rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy-deep">লগআউট</button>
+                <button onClick={onLogout} className="whitespace-nowrap rounded-full bg-navy px-3 py-1.5 text-xs font-semibold text-white hover:bg-navy-deep sm:px-4 sm:py-2 sm:text-sm">লগআউট</button>
               </>
             ) : (
               <>
-                <Link to="/login" className="rounded-full px-3 py-2 text-sm font-semibold text-ink dark:text-slate-100 hover:bg-blue-50 dark:hover:bg-slate-700">লগইন</Link>
-                <Link to="/register" className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">রেজিস্টার</Link>
+                <Link to="/login" className="whitespace-nowrap rounded-full px-2 py-1.5 text-xs font-semibold text-ink dark:text-slate-100 hover:bg-blue-50 dark:hover:bg-slate-700 sm:px-3 sm:py-2 sm:text-sm">লগইন</Link>
+                <Link to="/register" className="whitespace-nowrap rounded-full bg-primary px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary-dark sm:px-4 sm:py-2 sm:text-sm">রেজিস্টার</Link>
               </>
             )}
           </div>
@@ -125,9 +125,9 @@ export default function Layout({ children }) {
 
       <main className="flex-1 w-full">{children}</main>
 
-      {/* গাঢ় নেভি ফুটার */}
-      <footer className="mt-16 bg-navy text-white">
-        <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:grid-cols-3">
+      {/* গাঢ় নেভি ফুটার — মোবাইলে পুরো প্রস্থে (full-bleed), ডেস্কটপ আগের মতো */}
+      <footer className="mt-16 w-full bg-navy text-white">
+        <div className="mx-auto grid w-full gap-8 px-5 py-12 sm:max-w-6xl sm:grid-cols-3">
           <div>
             <div className="flex items-center gap-2">
               <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-cyanx text-lg font-bold">বা</span>
@@ -137,7 +137,7 @@ export default function Layout({ children }) {
           </div>
           <div>
             <h3 className="font-bold">দ্রুত লিংক</h3>
-            <ul className="mt-3 space-y-2 text-sm text-white/70">
+            <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-white/70 sm:block sm:space-y-2">
               <li><Link className="hover:text-white" to="/courses">কোর্সসমূহ</Link></li>
               <li><Link className="hover:text-white" to="/live-classes">লাইভ ক্লাস</Link></li>
               <li><Link className="hover:text-white" to="/my-courses">আমার কোর্স</Link></li>
