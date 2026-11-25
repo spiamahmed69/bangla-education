@@ -27,7 +27,7 @@ const GRADIENTS = [
 ]
 
 export default function Admin() {
-  const { user, authLoading, courses, orders, enrollments, allUsers, reviews, settings, decideOrder, saveCourse, deleteCourse, saveSettings, setUserRole, logoutDevice, deleteReview } = useStore()
+  const { user, authLoading, courses, orders, enrollments, allUsers, reviews, coupons, settings, decideOrder, saveCourse, deleteCourse, saveSettings, setUserRole, logoutDevice, deleteReview, saveCoupon, deleteCoupon } = useStore()
   const [tab, setTab] = useState('dashboard')
   const [msg, setMsg] = useState('')
 
@@ -37,6 +37,8 @@ export default function Admin() {
   const [lessonCourseId, setLessonCourseId] = useState('')
   const [lessonForm, setLessonForm] = useState(null)
   const [settingsForm, setSettingsForm] = useState(null)
+  const [couponForm, setCouponForm] = useState(null)
+  const [couponError, setCouponError] = useState('')
 
   if (authLoading) {
     return (
@@ -79,6 +81,7 @@ export default function Admin() {
     ['lessons', 'ক্লাস'],
     ['users', 'ইউজার'],
     ['reviews', `রিভিউ (${reviews.length}টি)`],
+    ['coupons', `কুপন (${coupons.length}টি)`],
     ['settings', 'সেটিংস'],
   ]
 
@@ -161,6 +164,25 @@ export default function Admin() {
     setMsg('সেটিংস সংরক্ষণ হয়েছে।')
   }
 
+  const startCouponForm = (coupon) => {
+    setCouponError('')
+    setCouponForm(coupon ? { ...coupon } : { code: '', discountType: 'percent', value: 10, active: true })
+  }
+
+  const saveCouponForm = async (e) => {
+    e.preventDefault()
+    setCouponError('')
+    try {
+      const code = await saveCoupon(couponForm)
+      setCouponForm(null)
+      setMsg(`কুপন “${code}” সংরক্ষণ হয়েছে।`)
+    } catch (err) {
+      setCouponError(err.message || 'কুপন সংরক্ষণ যায়নি।')
+    }
+  }
+
+  const couponLabel = (c) => c.discountType === 'fixed' ? `৳${bn(c.value)} ছাড়` : `${bn(c.value)}% ছাড়`
+
   return (
     <div className="mx-auto max-w-6xl px-5 pt-10">
       <h1 className="text-3xl font-bold text-ink">অ্যাডমিন প্যানেল</h1>
@@ -210,8 +232,8 @@ export default function Admin() {
             <div key={o.id} className="rounded-3xl bg-white p-5 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-bold text-ink">{o.courseTitle} — ৳{bn(o.price)}</p>
-                  <p className="text-sm text-muted">{o.userEmail} • {o.method === 'bkash' ? 'বিকাশ' : 'নগদ'} • প্রেরক: {o.senderNumber} • ট্রানজাকশন: {o.txnId}</p>
+                  <p className="font-bold text-ink">{o.courseTitle} — ৳{bn(o.price)}{o.originalPrice && o.originalPrice !== o.price ? <span className="text-muted line-through"> ৳{bn(o.originalPrice)}</span> : ''}</p>
+                  <p className="text-sm text-muted">{o.userEmail} • {o.method === 'bkash' ? 'বিকাশ' : 'নগদ'} • প্রেরক: {o.senderNumber} • ট্রানজাকশন: {o.txnId}{o.couponCode ? ` • কুপন: ${o.couponCode} (-৳${bn(o.couponDiscount || 0)})` : ''}</p>
                 </div>
                 <span className={`rounded-full px-4 py-1.5 text-sm font-bold ${o.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : o.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>
                   {o.status === 'approved' ? 'অ্যাপ্রুভ হয়েছে' : o.status === 'rejected' ? 'বাতিল' : 'অপেক্ষমাণ'}
@@ -385,6 +407,52 @@ export default function Admin() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {tab === 'coupons' && (
+        <div className="mt-6">
+          <button onClick={() => startCouponForm(null)} className="rounded-full bg-primary px-5 py-2.5 font-bold text-white">+ নতুন কুপন</button>
+          <p className="mt-3 text-sm text-muted">কুপন কোড চেকআউটে লিখলেই ছাড় প্রযোজ্য হবে। এখনো কোনো কুপন বানানো হয়নি — অ্যাডমিন এখান থেকে প্রথম কুপন বানাতে পারবে।</p>
+          {couponForm && (
+            <form onSubmit={saveCouponForm} className="mt-4 space-y-4 rounded-3xl bg-white p-6 shadow-sm">
+              <h2 className="font-bold text-ink">{couponForm.code && coupons.some(c => c.code === couponForm.code) ? 'কুপন সম্পাদনা' : 'নতুন কুপন'}</h2>
+              <div><label className={labelCls}>কুপন কোড (ইংরেজি অক্ষর ও সংখ্যা)</label><input required disabled={!!couponForm.createdAt} className={`${inputCls} uppercase disabled:opacity-60`} value={couponForm.code} onChange={e => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })} placeholder="যেমন: SP10" />{couponForm.createdAt && <p className="mt-1 text-xs text-muted">কোড বদলাতে হলে এই কুপনটি মুছে নতুন করে বানান।</p>}</div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div><label className={labelCls}>ছাড়ের ধরন</label>
+                  <select className={inputCls} value={couponForm.discountType} onChange={e => setCouponForm({ ...couponForm, discountType: e.target.value })}>
+                    <option value="percent">শতাংশ (%)</option>
+                    <option value="fixed">নির্দিষ্ট টাকা (৳)</option>
+                  </select></div>
+                <div><label className={labelCls}>{couponForm.discountType === 'fixed' ? 'ছাড় (৳)' : 'ছাড় (%) — ১ থেকে ১০০'}</label><input type="number" min="1" className={inputCls} value={couponForm.value} onChange={e => setCouponForm({ ...couponForm, value: e.target.value })} /></div>
+              </div>
+              <label className="flex cursor-pointer items-center gap-3">
+                <input type="checkbox" checked={couponForm.active !== false} onChange={e => setCouponForm({ ...couponForm, active: e.target.checked })} className="h-5 w-5 accent-emerald-600" />
+                <span className="font-bold text-ink">কুপনটি সক্রিয় (বন্ধ থাকলে চেকআউটে কাজ করবে না)</span>
+              </label>
+              {couponError && <p className="rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{couponError}</p>}
+              <div className="flex gap-3">
+                <button className="rounded-full bg-primary px-6 py-2.5 font-bold text-white">সংরক্ষণ</button>
+                <button type="button" onClick={() => setCouponForm(null)} className="rounded-full bg-slate-100 px-6 py-2.5 font-bold text-ink">বাতিল</button>
+              </div>
+            </form>
+          )}
+          <div className="mt-4 space-y-3">
+            {coupons.map(c => (
+              <div key={c.code} className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-white p-5 shadow-sm">
+                <div>
+                  <p className="font-bold text-ink">{c.code} <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-bold ${c.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-muted'}`}>{c.active ? 'সক্রিয়' : 'বন্ধ'}</span></p>
+                  <p className="text-sm text-muted">{couponLabel(c)}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={async () => { await saveCoupon({ ...c, active: !c.active }); setMsg(`কুপন “${c.code}” ${c.active ? 'বন্ধ' : 'সক্রিয়'} করা হয়েছে।`) }} className="rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-primary">{c.active ? 'বন্ধ করুন' : 'সক্রিয় করুন'}</button>
+                  <button onClick={() => startCouponForm(c)} className="rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-primary">সম্পাদনা</button>
+                  <button onClick={() => { if (confirm(`কুপন “${c.code}” মুছে ফেলবেন?`)) { deleteCoupon(c.code); setMsg('কুপন মুছে ফেলা হয়েছে।') } }} className="rounded-full bg-red-50 px-4 py-2 text-sm font-bold text-red-700">মুছুন</button>
+                </div>
+              </div>
+            ))}
+            {coupons.length === 0 && <p className="rounded-3xl bg-white p-8 text-center text-muted shadow-sm">এখনো কোনো কুপন বানানো হয়নি।</p>}
+          </div>
         </div>
       )}
 

@@ -35,6 +35,7 @@ function seedDemo() {
     orders: [],
     enrollments: [],
     reviews: [],
+    coupons: [],
   }
 }
 
@@ -60,6 +61,7 @@ export function StoreProvider({ children }) {
   const [enrollments, setEnrollments] = useState([])
   const [allUsers, setAllUsers] = useState([])
   const [reviews, setReviews] = useState([])
+  const [coupons, setCoupons] = useState([])
   const [dataLoading, setDataLoading] = useState(true)
 
   const firebaseMode = isFirebaseConfigured
@@ -104,6 +106,15 @@ export function StoreProvider({ children }) {
             console.warn('রিভিউ পড়া যায়নি (নিয়ম প্রকাশ করা হয়নি হয়তো):', e)
             setReviews([])
           }
+          // কুপন: নিয়ম এখনো কনসোলে প্রকাশ না হলে পড়া যাবে না —
+          // সেক্ষেত্রে কোনো কুপন দেখাবে না, বাকি ডেটা আটকাবে না।
+          try {
+            const qs = await getDocs(collection(db, 'coupons'))
+            setCoupons(qs.docs.map(d => ({ id: d.id, ...d.data() })))
+          } catch (e) {
+            console.warn('কুপন পড়া যায়নি (নিয়ম প্রকাশ করা হয়নি হয়তো):', e)
+            setCoupons([])
+          }
         } catch (e) {
           console.warn('Firebase ডেটা পড়া যায়নি, নমুনা ডেটা দেখানো হচ্ছে:', e)
         }
@@ -114,6 +125,7 @@ export function StoreProvider({ children }) {
         setOrders(demo.orders)
         setEnrollments(demo.enrollments)
         setReviews(demo.reviews || [])
+        setCoupons(demo.coupons || [])
         setAllUsers(demo.users.map(({ password, ...u }) => u))
       }
       setDataLoading(false)
@@ -237,11 +249,16 @@ export function StoreProvider({ children }) {
     return orders.find(o => o.userId === user.uid && o.courseId === courseId && o.status === 'pending') || null
   }, [user, orders])
 
-  const submitOrder = useCallback(async ({ courseId, method, senderNumber, txnId }) => {
+  const submitOrder = useCallback(async ({ courseId, method, senderNumber, txnId, couponCode = '', couponDiscount = 0, finalPrice = null }) => {
     const course = courses.find(c => c.id === courseId)
+    const originalPrice = course?.price || 0
+    // price = আসলে যা পাঠাতে হবে (কুপন ছাড়ের পরের দাম); originalPrice = কোর্সের আসল দাম।
+    // অ্যাডমিন অর্ডার দেখে যাচাই করতে পারে ছাত্র ঠিক ছাড়-দামটাই পাঠিয়েছে কি না।
+    const price = finalPrice != null ? Math.max(0, Number(finalPrice) || 0) : originalPrice
     const order = {
       userId: user.uid, userEmail: user.email, courseId, courseTitle: course?.title || courseId,
-      price: course?.price || 0, method, senderNumber, txnId,
+      price, originalPrice, couponCode: couponCode || '', couponDiscount: Number(couponDiscount) || 0,
+      method, senderNumber, txnId,
       status: 'pending', createdAt: new Date().toISOString(),
     }
     if (firebaseMode) {
@@ -344,6 +361,64 @@ export function StoreProvider({ children }) {
     if (user?.uid === uid) setUser(prev => prev ? { ...prev, role } : prev)
   }, [firebaseMode, persistDemo, user])
 
+  // ---------- Coupons: অ্যাডমিন বানায়, চেকআউটে সবাই যাচাই করতে পারে ----------
+  // কোনো কুপন সিড করা হয় না — অ্যাডমিন প্যানেল থেকে প্রথম কুপন বানাতে হবে।
+  const calcCouponDiscount = (coupon, price) => {
+    if (!coupon || !coupon.active) return 0
+    const p = Number(price) || 0
+    if (coupon.discountType === 'fixed') return Math.min(p, Math.max(0, Number(coupon.value) || 0))
+    const pct = Math.min(100, Math.max(0, Number(coupon.value) || 0))
+    return Math.min(p, Math.round((p * pct) / 100))
+  }
+
+  const validateCoupon = useCallback((rawCode, price) => {
+    const code = (rawCode || '').trim().toUpperCase()
+    if (!code) return { ok: false, error: 'কুপন কোড লিখুন।' }
+    const coupon = coupons.find(c => (c.code || '').toUpperCase() === code)
+    if (!coupon) return { ok: false, error: 'এই কুপন কোডটি পাওয়া যায়নি।' }
+    if (!coupon.active) return { ok: false, error: 'এই কুপনটি এখন বন্ধ আছে।' }
+    const discount = calcCouponDiscount(coupon, price)
+    return { ok: true, coupon, code, discount, finalPrice: Math.max(0, (Number(price) || 0) - discount) }
+  }, [coupons])
+
+  const saveCoupon = useCallback(async (coupon) => {
+    if (!user || user.role !== 'admin') throw new Error('শুধু অ্যাডমিন কুপন বানাতে পারে।')
+    const code = (coupon.code || '').trim().toUpperCase()
+    if (!code) throw new Error('কুপন কোড লিখুন।')
+    if (!/^[A-Z0-9]+$/.test(code)) throw new Error('কুপন কোডে শুধু ইংরেজি অক্ষর ও সংখ্যা ব্যবহার করুন।')
+    const discountType = coupon.discountType === 'fixed' ? 'fixed' : 'percent'
+    const value = Number(coupon.value) || 0
+    if (discountType === 'percent' && (value < 1 || value > 100)) throw new Error('শতাংশ ছাড় ১ থেকে ১০০-এর মধ্যে হতে হবে।')
+    if (discountType === 'fixed' && value <= 0) throw new Error('নির্দিষ্ট টাকার ছাড় ০-এর বেশি হতে হবে।')
+    const saved = { code, discountType, value, active: coupon.active !== false, createdAt: coupon.createdAt || new Date().toISOString() }
+    if (firebaseMode) {
+      await setDoc(doc(db, 'coupons', code), saved, { merge: true })
+    } else {
+      const demo = loadDemo()
+      const list = demo.coupons || []
+      demo.coupons = list.some(c => c.code === code)
+        ? list.map(c => c.code === code ? saved : c)
+        : [...list, saved]
+      persistDemo({ coupons: demo.coupons })
+    }
+    setCoupons(prev => prev.some(c => c.code === code)
+      ? prev.map(c => c.code === code ? saved : c)
+      : [...prev, saved])
+    return code
+  }, [firebaseMode, user, persistDemo])
+
+  const deleteCoupon = useCallback(async (code) => {
+    if (!user || user.role !== 'admin') throw new Error('শুধু অ্যাডমিন কুপন মুছতে পারে।')
+    const upper = (code || '').trim().toUpperCase()
+    if (firebaseMode) { await deleteDoc(doc(db, 'coupons', upper)) }
+    else {
+      const demo = loadDemo()
+      demo.coupons = (demo.coupons || []).filter(c => c.code !== upper)
+      persistDemo({ coupons: demo.coupons })
+    }
+    setCoupons(prev => prev.filter(c => c.code !== upper))
+  }, [firebaseMode, user, persistDemo])
+
   // ---------- Lesson access: ভিডিও URL শুধু এনরোল করা ইউজারের জন্য ----------
   const getLessonVideo = useCallback(async (courseId, lessonId) => {
     if (!isEnrolled(courseId)) return null
@@ -414,16 +489,18 @@ export function StoreProvider({ children }) {
 
   const value = useMemo(() => ({
     firebaseMode, user, authLoading, dataLoading,
-    courses, settings, orders, enrollments, allUsers, reviews,
+    courses, settings, orders, enrollments, allUsers, reviews, coupons,
     register, login, logout, logoutDevice,
     isEnrolled, pendingOrderFor, submitOrder, decideOrder,
     saveCourse, deleteCourse, saveSettings, setUserRole, getLessonVideo,
     reviewsByCourse, averageRating, submitReview, deleteReview,
+    validateCoupon, saveCoupon, deleteCoupon,
     getCourse: (id) => courses.find(c => c.id === id),
-  }), [firebaseMode, user, authLoading, dataLoading, courses, settings, orders, enrollments, allUsers, reviews,
+  }), [firebaseMode, user, authLoading, dataLoading, courses, settings, orders, enrollments, allUsers, reviews, coupons,
     register, login, logout, logoutDevice, isEnrolled, pendingOrderFor, submitOrder, decideOrder,
     saveCourse, deleteCourse, saveSettings, setUserRole, getLessonVideo,
-    reviewsByCourse, averageRating, submitReview, deleteReview])
+    reviewsByCourse, averageRating, submitReview, deleteReview,
+    validateCoupon, saveCoupon, deleteCoupon])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }

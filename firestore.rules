@@ -40,6 +40,14 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // কুপন: সবাই পড়তে পারে (চেকআউটে যাচাই করতে হয়), লেখে/বদলায়/মুছে শুধু অ্যাডমিন।
+    // কুপনের ফাইল বদলালেই নিয়ম চালু হয় না — firestore.rules Firebase কনসোলে
+    // Publish করতে হবে, নইলে লাইভে কুপন পড়া/লেখা permission-denied হবে।
+    match /coupons/{code} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // পেমেন্ট সেটিংস: সবাই পড়তে পারে (নম্বর দেখানো লাগে), লেখে শুধু অ্যাডমিন
     match /settings/{docId} {
       allow read: if true;
