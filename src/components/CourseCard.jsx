@@ -48,9 +48,7 @@ export default function CourseCard({ course }) {
         </Link>
         <p className="mt-1 line-clamp-2 text-sm text-muted dark:text-slate-400">{course.description}</p>
         <p className="mt-2 text-sm text-muted dark:text-slate-400">শিক্ষক: {course.teacher} • {course.lessons?.length || 0}টি ক্লাস</p>
-        {students > 0 && (
-          <p className="mt-1 text-sm text-muted dark:text-slate-400">{students.toLocaleString('bn-BD')} জন কিনেছে</p>
-        )}
+        <p className="mt-1 text-sm text-muted dark:text-slate-400">{students.toLocaleString('bn-BD')} জন কিনেছে</p>
         {avg !== null && (
           <p className="mt-1 text-sm font-bold text-amber-700 dark:text-amber-300">★ {avg.toLocaleString('bn-BD')} • {reviewCount.toLocaleString('bn-BD')}টি রিভিউ</p>
         )}
