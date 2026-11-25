@@ -60,24 +60,42 @@ export default function CourseDetail() {
   return (
     <div className="mx-auto max-w-6xl px-5 pt-10">
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <CoverArt title={course.title} gradient={course.gradient} imageUrl={course.imageUrl} className="h-56 w-full rounded-[2rem] sm:h-72" />
-          <div className="mt-5 flex flex-wrap gap-2">
-            <span className="rounded-full bg-blue-50 dark:bg-slate-700 px-3 py-1 text-xs font-bold text-primary">{course.level}</span>
-            {course.sample && <span className="rounded-full bg-amber-50 dark:bg-amber-950 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">নমুনা কোর্স</span>}
+        <div className="space-y-5 lg:col-span-2">
+          {/* কার্ড ১ — কোর্সের নাম + লেভেল */}
+          <div className="rounded-[2rem] bg-white dark:bg-slate-800 p-5 shadow-sm sm:p-6">
+            <CoverArt title={course.title} gradient={course.gradient} imageUrl={course.imageUrl} className="h-56 w-full rounded-3xl sm:h-72" />
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="rounded-full bg-blue-50 dark:bg-slate-700 px-3 py-1 text-xs font-bold text-primary">{course.level}</span>
+              {course.sample && <span className="rounded-full bg-amber-50 dark:bg-amber-950 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">নমুনা কোর্স</span>}
+            </div>
+            <h1 className="mt-3 text-3xl font-bold text-ink dark:text-slate-100">{course.title}</h1>
           </div>
-          <h1 className="mt-4 text-3xl font-bold text-ink dark:text-slate-100">{course.title}</h1>
-          <p className="mt-2 text-muted dark:text-slate-400">{course.description}</p>
-          <p className="mt-3 text-sm text-muted dark:text-slate-400">শিক্ষক: {course.teacher}{course.sample ? ' (নমুনা)' : ''}</p>
-          {enrollmentCount(course.id) > 0 && (
-            <p className="mt-1 text-sm text-muted dark:text-slate-400">{enrollmentCount(course.id).toLocaleString('bn-BD')} জন কিনেছে</p>
-          )}
-          {avg !== null ? (
-            <p className="mt-2 text-sm font-bold text-amber-700 dark:text-amber-300">★ {avg.toLocaleString('bn-BD')} • {courseReviews.length.toLocaleString('bn-BD')}টি রিভিউ</p>
-          ) : (
-            <p className="mt-2 text-sm text-muted dark:text-slate-400">এখনো কোনো রিভিউ নেই</p>
-          )}
-          {hasFreeDemo(course) && <p className="mt-3 text-sm font-bold text-emerald-700 dark:text-emerald-300">▶ এই কোর্সে ফ্রি ডেমো ক্লাস আছে — কিনে দেখতে পারেন কেমন শেখানো হয়।</p>}
+
+          {/* কার্ড ২ — এই কোর্সে যা থাকছে */}
+          <div className="rounded-[2rem] bg-white dark:bg-slate-800 p-5 shadow-sm sm:p-6">
+            <p className="text-muted dark:text-slate-400">{course.description}</p>
+          </div>
+
+          {/* কার্ড ৩ — শিক্ষক */}
+          <div className="rounded-[2rem] bg-white dark:bg-slate-800 p-5 shadow-sm sm:p-6">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-50 dark:bg-slate-700 text-lg font-bold text-primary">{(course.teacher || '').trim().charAt(0) || 'শি'}</span>
+              <div>
+                <p className="text-xs font-bold text-muted dark:text-slate-400">শিক্ষক</p>
+                <p className="font-bold text-ink dark:text-slate-100">{course.teacher}{course.sample ? ' (নমুনা)' : ''}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* কার্ড ৪ — কতজন কিনেছে + রিভিউ */}
+          <div className="rounded-[2rem] bg-white dark:bg-slate-800 p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-muted dark:text-slate-400">{enrollmentCount(course.id).toLocaleString('bn-BD')} জন কিনেছে</p>
+            {avg !== null ? (
+              <p className="mt-2 text-sm font-bold text-amber-700 dark:text-amber-300">★ {avg.toLocaleString('bn-BD')} • {courseReviews.length.toLocaleString('bn-BD')}টি রিভিউ</p>
+            ) : (
+              <p className="mt-2 text-sm text-muted dark:text-slate-400">এখনো কোনো রিভিউ নেই</p>
+            )}
+          </div>
           {enrolled && (() => {
             const total = course.lessons?.length || 0
             const done = completedLessonIds(course.id).length
@@ -98,19 +116,25 @@ export default function CourseDetail() {
             )
           })()}
 
-          {!enrolled && freeLesson && (
-            <div className="mt-8">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-bold text-ink dark:text-slate-100">ফ্রি ডেমো ক্লাস</h2>
-                <span className="rounded-full bg-emerald-100 dark:bg-emerald-900 px-3 py-1 text-xs font-bold text-emerald-800 dark:text-emerald-200">ফ্রি — লগইন ছাড়াই দেখুন</span>
-              </div>
-              <p className="mt-1 text-sm text-muted dark:text-slate-400">{freeLesson.title} • {freeLesson.duration}</p>
-              <div className="mt-4 overflow-hidden rounded-[2rem] shadow-xl">
-                <SecurePlayer videoId={freeLesson.demoYoutubeId} title={freeLesson.title} />
-              </div>
-              <p className="mt-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950 p-4 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
-                এই ক্লাসটি ফ্রি — বাকি {Math.max((course.lessons?.length || 1) - 1, 0)}টি ক্লাস কোর্স কিনে অ্যাডমিনের অ্যাপ্রুভ পেলেই খুলবে।
-              </p>
+          {/* কার্ড ৫ — ফ্রি ডেমো ব্যানার + ফ্রি ডেমো ক্লাস */}
+          {hasFreeDemo(course) && (
+            <div className="rounded-[2rem] bg-white dark:bg-slate-800 p-5 shadow-sm sm:p-6">
+              <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">▶ এই কোর্সে ফ্রি ডেমো ক্লাস আছে — কিনে দেখতে পারেন কেমন শেখানো হয়।</p>
+              {!enrolled && freeLesson && (
+                <div className="mt-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-xl font-bold text-ink dark:text-slate-100">ফ্রি ডেমো ক্লাস</h2>
+                    <span className="rounded-full bg-emerald-100 dark:bg-emerald-900 px-3 py-1 text-xs font-bold text-emerald-800 dark:text-emerald-200">ফ্রি — লগইন ছাড়াই দেখুন</span>
+                  </div>
+                  <p className="mt-1 text-sm text-muted dark:text-slate-400">{freeLesson.title} • {freeLesson.duration}</p>
+                  <div className="mt-4 overflow-hidden rounded-3xl shadow-xl">
+                    <SecurePlayer videoId={freeLesson.demoYoutubeId} title={freeLesson.title} />
+                  </div>
+                  <p className="mt-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950 p-4 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                    এই ক্লাসটি ফ্রি — বাকি {Math.max((course.lessons?.length || 1) - 1, 0)}টি ক্লাস কোর্স কিনে অ্যাডমিনের অ্যাপ্রুভ পেলেই খুলবে।
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
