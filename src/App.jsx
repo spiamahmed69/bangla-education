@@ -1,0 +1,46 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { StoreProvider } from './lib/store'
+import Layout from './components/Layout'
+import Home from './pages/Home'
+import Courses from './pages/Courses'
+import CourseDetail from './pages/CourseDetail'
+import Learn from './pages/Learn'
+import { Login, Register } from './pages/Auth'
+import Checkout from './pages/Checkout'
+import MyCourses from './pages/MyCourses'
+import Admin from './pages/Admin'
+import About from './pages/About'
+
+function NotFound() {
+  return (
+    <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
+      <h1 className="text-3xl font-bold text-ink">পেজটি পাওয়া যায়নি</h1>
+      <p className="mt-2 text-muted">আপনি যে ঠিকানায় গেছেন, সেখানে কিছু নেই।</p>
+      <a href="/" className="mt-6 inline-block rounded-full bg-primary px-6 py-3 font-bold text-white">হোমে ফিরুন</a>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <StoreProvider>
+      <BrowserRouter>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/courses/:id" element={<CourseDetail />} />
+            <Route path="/learn/:courseId/:lessonId" element={<Learn />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/checkout/:courseId" element={<Checkout />} />
+            <Route path="/my-courses" element={<MyCourses />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/about" element={<About />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Layout>
+      </BrowserRouter>
+    </StoreProvider>
+  )
+}

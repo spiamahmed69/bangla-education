@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    function isEnrolled(courseId) {
+      return signedIn() && exists(/databases/$(database)/documents/enrollments/$(request.auth.uid + '_' + courseId));
+    }
+
+    // কোর্স ও লেসনের তথ্য (শিরোনাম/সময়কাল) সবাই পড়তে পারে — কিন্তু ভিডিও URL নয়
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if isAdmin();
+      match /lessons/{lessonId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+      // ভিডিও URL: শুধু এনরোল করা শিক্ষার্থী আর অ্যাডমিন পড়তে পারে
+      match /lessonAccess/{lessonId} {
+        allow read: if isAdmin() || isEnrolled(courseId);
+        allow write: if isAdmin();
+      }
+    }
+
+    // পেমেন্ট সেটিংস: সবাই পড়তে পারে (নম্বর দেখানো লাগে), লেখে শুধু অ্যাডমিন
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // অর্ডার: নিজের অর্ডার নিজে বানাতে/পড়তে পারে; অ্যাডমিন সব পড়ে/সিদ্ধান্ত নেয়
+    match /orders/{orderId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow update: if isAdmin();
+    }
+
+    // এনরোলমেন্ট: নিজেরটা পড়তে পারে; বানায়/বদলায় শুধু অ্যাডমিন (অ্যাপ্রুভের সময়)
+    match /enrollments/{enrollmentId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    // ইউজার প্রোফাইল: নিজেরটা পড়ে/নিজের ডিভাইস আপডেট করে; অ্যাডমিন সব দেখে
+    match /users/{userId} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == userId);
+      allow create: if signedIn() && request.auth.uid == userId;
+      allow update: if isAdmin() || (signedIn() && request.auth.uid == userId);
+    }
+  }
+}

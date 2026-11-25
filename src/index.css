@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-page: #F4F5FF;
+  --color-primary: #2563EB;
+  --color-primary-dark: #1D4ED8;
+  --color-cyanx: #06B6D4;
+  --color-violetx: #8B5CF6;
+  --color-navy: #0B1F4B;
+  --color-navy-deep: #01367F;
+  --color-ink: #213549;
+  --color-muted: #5B6B82;
+  --color-cta: #FD9A2A;
+  --color-cta-dark: #E8820A;
+  --font-bn: "Hind Siliguri", "Inter", system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-bn);
+  background-color: #F4F5FF;
+  color: #213549;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+a, button { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid #2563EB; outline-offset: 2px; border-radius: 6px; }
+input, select, textarea { font-size: 16px; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-up { animation: fadeUp .3s ease both; }
+.glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 30px rgba(37, 99, 235, 0.10);
+}
