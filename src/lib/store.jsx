@@ -38,6 +38,7 @@ function seedDemo() {
     coupons: [],
     progress: [],
     quizzes: {},
+    notifications: [],
   }
 }
 
@@ -66,6 +67,7 @@ export function StoreProvider({ children }) {
   const [coupons, setCoupons] = useState([])
   const [progress, setProgress] = useState([])
   const [quizzes, setQuizzes] = useState({})
+  const [notifications, setNotifications] = useState([])
   const [dataLoading, setDataLoading] = useState(true)
 
   const firebaseMode = isFirebaseConfigured
@@ -101,12 +103,20 @@ export function StoreProvider({ children }) {
             )
             setSettings({ ...DEFAULT_SETTINGS, ...saved })
           }
-          const os = await getDocs(collection(db, 'orders'))
-          setOrders(os.docs.map(d => ({ id: d.id, ...d.data() })))
-          const es = await getDocs(collection(db, 'enrollments'))
-          setEnrollments(es.docs.map(d => ({ id: d.id, ...d.data() })))
-          const us = await getDocs(collection(db, 'users'))
-          setAllUsers(us.docs.map(d => ({ uid: d.id, ...d.data() })))
+          // অর্ডার/এনরোলমেন্ট/ইউজার — পুরো কালেকশন পড়তে পারে শুধু অ্যাডমিন;
+          // শিক্ষার্থী বা শিক্ষকের ক্ষেত্রে নিয়মে আটকালে বাকি ডেটা আটকাবে না।
+          try {
+            const os = await getDocs(collection(db, 'orders'))
+            setOrders(os.docs.map(d => ({ id: d.id, ...d.data() })))
+          } catch (e) { console.warn('অর্ডার পড়া যায়নি:', e); setOrders([]) }
+          try {
+            const es = await getDocs(collection(db, 'enrollments'))
+            setEnrollments(es.docs.map(d => ({ id: d.id, ...d.data() })))
+          } catch (e) { console.warn('এনরোলমেন্ট পড়া যায়নি:', e); setEnrollments([]) }
+          try {
+            const us = await getDocs(collection(db, 'users'))
+            setAllUsers(us.docs.map(d => ({ uid: d.id, ...d.data() })))
+          } catch (e) { console.warn('ইউজার তালিকা পড়া যায়নি:', e); setAllUsers([]) }
           // রিভিউ: নিয়ম (firestore.rules) এখনো কনসোলে প্রকাশ না হলে পড়া যাবে না —
           // সেক্ষেত্রে খালি রিভিউ দেখাবে, বাকি ডেটা আটকাবে না।
           try {
@@ -136,6 +146,7 @@ export function StoreProvider({ children }) {
         setEnrollments(demo.enrollments)
         setReviews(demo.reviews || [])
         setCoupons(demo.coupons || [])
+        setNotifications(demo.notifications || [])
         setProgress(demo.progress || [])
         setQuizzes(demo.quizzes || {})
         setAllUsers(demo.users.map(({ password, ...u }) => u))
@@ -191,6 +202,60 @@ export function StoreProvider({ children }) {
     load()
     return () => { alive = false }
   }, [firebaseMode, user])
+
+  // ---------- Notifications: লগইন হওয়ার পর নিজের নোটিফিকেশন পড়া ----------
+  // নিয়ম (firestore.rules) এখনো কনসোলে প্রকাশ না হলে পড়া যাবে না —
+  // সেক্ষেত্রে নোটিফিকেশন খালি দেখাবে, বাকি ডেটা আটকাবে না।
+  // নোটিফিকেশন শুধু অ্যাপের ভেতরে দেখানো হয় — ইমেইল বা SMS যায় না।
+  useEffect(() => {
+    if (!firebaseMode) return
+    if (!user) { setNotifications([]); return }
+    let alive = true
+    const load = async () => {
+      try {
+        const ns = await getDocs(query(collection(db, 'notifications'), where('userId', '==', user.uid)))
+        if (alive) setNotifications(ns.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')))
+      } catch (e) {
+        console.warn('নোটিফিকেশন পড়া যায়নি (নিয়ম প্রকাশ করা হয়নি হয়তো):', e)
+        if (alive) setNotifications([])
+      }
+    }
+    load()
+    return () => { alive = false }
+  }, [firebaseMode, user])
+
+  const unreadNotifications = useMemo(
+    () => notifications.filter(n => !n.read).length,
+    [notifications]
+  )
+
+  const markNotificationRead = useCallback(async (notificationId) => {
+    if (!user) return
+    if (firebaseMode) {
+      try { await updateDoc(doc(db, 'notifications', notificationId), { read: true }) } catch { /* নিয়ম প্রকাশ না হলে চুপচাপ এড়িয়ে যাওয়া হয় */ }
+    } else {
+      const demo = loadDemo()
+      demo.notifications = (demo.notifications || []).map(n => n.id === notificationId ? { ...n, read: true } : n)
+      persistDemo({ notifications: demo.notifications })
+    }
+    setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n))
+  }, [firebaseMode, user, persistDemo])
+
+  const markAllNotificationsRead = useCallback(async () => {
+    if (!user) return
+    const unread = notifications.filter(n => !n.read)
+    if (unread.length === 0) return
+    if (firebaseMode) {
+      await Promise.all(unread.map(n =>
+        updateDoc(doc(db, 'notifications', n.id), { read: true }).catch(() => {})
+      ))
+    } else {
+      const demo = loadDemo()
+      demo.notifications = (demo.notifications || []).map(n => ({ ...n, read: true }))
+      persistDemo({ notifications: demo.notifications })
+    }
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+  }, [firebaseMode, user, notifications, persistDemo])
 
   const enforceDeviceLimit = useCallback(async (profile) => {
     const deviceId = getDeviceId()
@@ -329,13 +394,41 @@ export function StoreProvider({ children }) {
       }
       persistDemo({ orders: demo.orders, enrollments: demo.enrollments })
     }
+    // পেমেন্টের সিদ্ধান্তের খবর ছাত্রকে নোটিফিকেশনে জানানো হয় (শুধু অ্যাপের ভেতরে)।
+    // নোটিফিকেশন লেখা না গেলেও (যেমন নিয়ম এখনো কনসোলে প্রকাশ হয়নি) অর্ডারের
+    // সিদ্ধান্ত আটকাবে না — তাই এটা try/catch-এর ভেতরে রাখা হয়েছে।
+    try {
+      const isApproved = decision === 'approved'
+      const note = {
+        userId: order.userId, type: isApproved ? 'order_approved' : 'order_rejected',
+        title: isApproved ? 'পেমেন্ট অ্যাপ্রুভ হয়েছে' : 'পেমেন্ট বাতিল হয়েছে',
+        message: isApproved
+          ? `“${order.courseTitle}” কোর্সের পেমেন্ট অ্যাপ্রুভ হয়েছে — ক্লাস খুলে গেছে, এখনই পড়া শুরু করুন।`
+          : `“${order.courseTitle}” কোর্সের পেমেন্টটি বাতিল হয়েছে। কোনো ভুল হলে অ্যাডমিনের সঙ্গে যোগাযোগ করুন।`,
+        courseTitle: order.courseTitle, orderId,
+        read: false, createdAt: new Date().toISOString(),
+      }
+      if (firebaseMode) {
+        const ref = doc(collection(db, 'notifications'))
+        await setDoc(ref, note)
+        if (user?.uid === order.userId) setNotifications(prev => [{ id: ref.id, ...note }, ...prev])
+      } else {
+        const id = `ntf-${Date.now()}`
+        const demo = loadDemo()
+        demo.notifications = [{ id, ...note }, ...(demo.notifications || [])]
+        persistDemo({ notifications: demo.notifications })
+        if (user?.uid === order.userId) setNotifications(prev => [{ id, ...note }, ...prev])
+      }
+    } catch (e) {
+      console.warn('নোটিফিকেশন পাঠানো যায়নি (নিয়ম প্রকাশ করা হয়নি হয়তো):', e)
+    }
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: decision } : o))
     if (decision === 'approved') {
       setEnrollments(prev => prev.some(e => e.userId === order.userId && e.courseId === order.courseId)
         ? prev
         : [...prev, { id: `${order.userId}_${order.courseId}`, userId: order.userId, courseId: order.courseId, status: 'active' }])
     }
-  }, [firebaseMode, orders, persistDemo])
+  }, [firebaseMode, orders, persistDemo, user])
 
   // ---------- Admin: courses / lessons / settings / users ----------
   const saveCourse = useCallback(async (course) => {
@@ -632,17 +725,17 @@ export function StoreProvider({ children }) {
 
   const value = useMemo(() => ({
     firebaseMode, user, authLoading, dataLoading,
-    courses, settings, orders, enrollments, allUsers, reviews, coupons, progress, quizzes,
+    courses, settings, orders, enrollments, allUsers, reviews, coupons, progress, quizzes, notifications, unreadNotifications,
     register, login, logout, logoutDevice,
-    isEnrolled, pendingOrderFor, enrollmentCount, submitOrder, decideOrder,
+    isEnrolled, pendingOrderFor, enrollmentCount, submitOrder, decideOrder, markNotificationRead, markAllNotificationsRead,
     saveCourse, deleteCourse, saveSettings, setUserRole, getLessonVideo,
     reviewsByCourse, averageRating, submitReview, deleteReview,
     validateCoupon, saveCoupon, deleteCoupon,
     completedLessonIds, progressPct, toggleLessonComplete, progressUpdatedAt,
     getQuiz, saveQuiz, deleteQuiz,
     getCourse: (id) => courses.find(c => c.id === id),
-  }), [firebaseMode, user, authLoading, dataLoading, courses, settings, orders, enrollments, allUsers, reviews, coupons, progress, quizzes,
-    register, login, logout, logoutDevice, isEnrolled, pendingOrderFor, enrollmentCount, submitOrder, decideOrder,
+  }), [firebaseMode, user, authLoading, dataLoading, courses, settings, orders, enrollments, allUsers, reviews, coupons, progress, quizzes, notifications, unreadNotifications,
+    register, login, logout, logoutDevice, isEnrolled, pendingOrderFor, enrollmentCount, submitOrder, decideOrder, markNotificationRead, markAllNotificationsRead,
     saveCourse, deleteCourse, saveSettings, setUserRole, getLessonVideo,
     reviewsByCourse, averageRating, submitReview, deleteReview,
     validateCoupon, saveCoupon, deleteCoupon,

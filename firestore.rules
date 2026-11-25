@@ -8,6 +8,12 @@ service cloud.firestore {
     function isEnrolled(courseId) {
       return signedIn() && exists(/databases/$(database)/documents/enrollments/$(request.auth.uid + '_' + courseId));
     }
+    // কোর্সের দায়িত্বপ্রাপ্ত শিক্ষক কি না — কোর্স ডকের teacherUid দেখে।
+    // শিক্ষক শুধু নিজের কোর্সের এনরোলমেন্টই পড়তে পারে, অন্য কোর্সেরটা নয়।
+    function isTeacherOfCourse(courseId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/courses/$(courseId)).data.teacherUid == request.auth.uid;
+    }
 
     // কোর্স ও লেসনের তথ্য (শিরোনাম/সময়কাল) সবাই পড়তে পারে — কিন্তু ভিডিও URL নয়
     match /courses/{courseId} {
@@ -80,10 +86,24 @@ service cloud.firestore {
       allow update: if isAdmin();
     }
 
-    // এনরোলমেন্ট: নিজেরটা পড়তে পারে; বানায়/বদলায় শুধু অ্যাডমিন (অ্যাপ্রুভের সময়)
+    // এনরোলমেন্ট: নিজেরটা পড়তে পারে; বানায়/বদলায় শুধু অ্যাডমিন (অ্যাপ্রুভের সময়);
+    // কোর্সের শিক্ষক শুধু নিজের কোর্সের এনরোলমেন্ট পড়তে পারে (ছাত্র সংখ্যা দেখার জন্য)।
     match /enrollments/{enrollmentId} {
-      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid)
+        || isTeacherOfCourse(resource.data.courseId);
       allow write: if isAdmin();
+    }
+
+    // নোটিফিকেশন: পেমেন্ট অ্যাপ্রুভ/বাতিলের খবর শুধু অ্যাপের ভেতরে দেখানো হয় —
+    // ইমেইল বা SMS যায় না। বানায় শুধু অ্যাডমিন (অর্ডার সিদ্ধান্তের সময়);
+    // পড়ে মালিক নিজে বা অ্যাডমিন; "পড়া হয়েছে" চিহ্ন ছাড়া আর কিছু বদলানো যায় না।
+    // নিয়ম ফাইল বদলালেই চালু হয় না — firestore.rules Firebase কনসোলে Publish করতে হবে।
+    match /notifications/{notificationId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isAdmin() && request.resource.data.userId != null;
+      allow update: if (isAdmin() || (signedIn() && resource.data.userId == request.auth.uid))
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isAdmin();
     }
 
     // ইউজার প্রোফাইল: নিজেরটা পড়ে/নিজের ডিভাইস আপডেট করে; অ্যাডমিন সব দেখে

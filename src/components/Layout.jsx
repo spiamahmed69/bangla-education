@@ -36,7 +36,7 @@ export function CoverArt({ title, gradient, imageUrl, className = '' }) {
 }
 
 export default function Layout({ children }) {
-  const { user, logout, firebaseMode } = useStore()
+  const { user, logout, firebaseMode, unreadNotifications } = useStore()
   const navigate = useNavigate()
   const onLogout = async () => { await logout(); navigate('/') }
   const linkCls = ({ isActive }) =>
@@ -61,8 +61,17 @@ export default function Layout({ children }) {
             <NavLink to="/about" className={linkCls}>আমাদের সম্পর্কে</NavLink>
             {user && <NavLink to="/my-courses" className={linkCls}>আমার কোর্স</NavLink>}
             {user?.role === 'admin' && <NavLink to="/admin" className={linkCls}>অ্যাডমিন</NavLink>}
+            {user?.role === 'teacher' && <NavLink to="/teacher" className={linkCls}>শিক্ষক প্যানেল</NavLink>}
           </nav>
           <div className="flex items-center gap-2">
+            {user && (
+              <Link to="/notifications" className="relative flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-lg hover:bg-blue-100" aria-label="নোটিফিকেশন">
+                🔔
+                {unreadNotifications > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[11px] font-bold text-white">{unreadNotifications > 9 ? '৯+' : unreadNotifications}</span>
+                )}
+              </Link>
+            )}
             {user ? (
               <>
                 <span className="hidden max-w-32 truncate text-sm font-semibold text-ink lg:block">{user.name}</span>
@@ -83,6 +92,7 @@ export default function Layout({ children }) {
           <NavLink to="/about" className={linkCls}>আমাদের সম্পর্কে</NavLink>
           {user && <NavLink to="/my-courses" className={linkCls}>আমার কোর্স</NavLink>}
           {user?.role === 'admin' && <NavLink to="/admin" className={linkCls}>অ্যাডমিন</NavLink>}
+          {user?.role === 'teacher' && <NavLink to="/teacher" className={linkCls}>শিক্ষক প্যানেল</NavLink>}
         </div>
       </header>
 

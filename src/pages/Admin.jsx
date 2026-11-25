@@ -81,6 +81,7 @@ export default function Admin() {
 
   const tabs = [
     ['dashboard', 'ড্যাশবোর্ড'],
+    ['report', 'রিপোর্ট'],
     ['orders', `পেমেন্ট (${pendingOrders.length} অপেক্ষমাণ)`],
     ['courses', 'কোর্স'],
     ['lessons', 'ক্লাস'],
@@ -91,7 +92,49 @@ export default function Admin() {
     ['settings', 'সেটিংস'],
   ]
 
-  const startCourseForm = (course) => setCourseForm(course ? { ...course } : { id: '', title: '', category: 'bangla', level: 'এসএসসি', price: 499, oldPrice: '', teacher: '', description: '', gradient: GRADIENTS[0], lessons: [] })
+  const startCourseForm = (course) => setCourseForm(course ? { ...course, teacherUid: course.teacherUid || '' } : { id: '', title: '', category: 'bangla', level: 'এসএসসি', price: 499, oldPrice: '', teacher: '', teacherUid: '', description: '', gradient: GRADIENTS[0], lessons: [] })
+
+  // বিক্রির রিপোর্ট — অর্ডারের আসল ডেটা থেকেই হিসাব, কিছু বানানো হয় না
+  const approvedOrders = orders.filter(o => o.status === 'approved')
+  const rejectedOrders = orders.filter(o => o.status === 'rejected')
+  const reportPerCourse = courses
+    .map(c => {
+      const list = orders.filter(o => o.courseId === c.id)
+      const ok = list.filter(o => o.status === 'approved')
+      return { id: c.id, title: c.title, orders: list.length, approved: ok.length, revenue: ok.reduce((s, o) => s + (o.price || 0), 0) }
+    })
+    .filter(x => x.orders > 0)
+    .sort((a, b) => b.revenue - a.revenue)
+  const reportPerMonth = Object.entries(
+    orders.reduce((acc, o) => {
+      const key = (o.createdAt || '').slice(0, 7)
+      if (!key) return acc
+      acc[key] = acc[key] || { orders: 0, revenue: 0 }
+      acc[key].orders += 1
+      if (o.status === 'approved') acc[key].revenue += (o.price || 0)
+      return acc
+    }, {})
+  )
+    .map(([key, v]) => ({ key, label: new Date(`${key}-01T00:00:00`).toLocaleDateString('bn-BD', { year: 'numeric', month: 'long' }), ...v }))
+    .sort((a, b) => b.key.localeCompare(a.key))
+
+  const downloadOrdersCsv = () => {
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const header = ['তারিখ', 'কোর্স', 'ইমেইল', 'মাধ্যম', 'প্রেরক নম্বর', 'ট্রানজাকশন', 'কুপন', 'টাকা (৳)', 'অবস্থা']
+    const lines = orders.map(o => [
+      o.createdAt ? new Date(o.createdAt).toLocaleString('bn-BD') : '',
+      o.courseTitle, o.userEmail, o.method === 'bkash' ? 'বিকাশ' : 'নগদ',
+      o.senderNumber, o.txnId, o.couponCode || '',
+      o.price || 0,
+      o.status === 'approved' ? 'অ্যাপ্রুভ' : o.status === 'rejected' ? 'বাতিল' : 'অপেক্ষমাণ',
+    ].map(esc).join(','))
+    const blob = new Blob(['\ufeff' + [header.map(esc).join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = 'bangla-education-orders.csv'
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
 
   const saveCourseForm = async (e) => {
     e.preventDefault()
@@ -274,6 +317,81 @@ export default function Admin() {
         </div>
       )}
 
+      {tab === 'report' && (
+        <div className="mt-6 space-y-6">
+          <div className="grid gap-4 sm:grid-cols-4">
+            {[
+              ['মোট বিক্রি (অ্যাপ্রুভ)', `৳${bn(revenue)}`],
+              ['অ্যাপ্রুভ অর্ডার', `${approvedOrders.length}টি`],
+              ['অপেক্ষমাণ পেমেন্ট', `${pendingOrders.length}টি`],
+              ['বাতিল অর্ডার', `${rejectedOrders.length}টি`],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-3xl bg-white p-6 shadow-sm">
+                <p className="text-sm text-muted">{label}</p>
+                <p className="mt-1 text-2xl font-bold text-ink">{value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-bold text-ink">কোর্স অনুযায়ী বিক্রি</h2>
+              <button onClick={downloadOrdersCsv} className="rounded-full bg-primary px-5 py-2.5 font-bold text-white">⬇ CSV ডাউনলোড (সব অর্ডার)</button>
+            </div>
+            {reportPerCourse.length === 0 ? (
+              <p className="mt-3 text-sm text-muted">এখনো কোনো অর্ডার জমা পড়েনি।</p>
+            ) : (
+              <table className="mt-4 w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b text-muted">
+                    <th className="py-2 pr-2">কোর্স</th>
+                    <th className="py-2 pr-2">অর্ডার</th>
+                    <th className="py-2 pr-2">অ্যাপ্রুভ</th>
+                    <th className="py-2">বিক্রি</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportPerCourse.map(r => (
+                    <tr key={r.id} className="border-b border-slate-100">
+                      <td className="py-2 pr-2 font-bold text-ink">{r.title}</td>
+                      <td className="py-2 pr-2">{bn(r.orders)}টি</td>
+                      <td className="py-2 pr-2">{bn(r.approved)}টি</td>
+                      <td className="py-2 font-bold text-ink">৳{bn(r.revenue)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <h2 className="font-bold text-ink">মাস অনুযায়ী বিক্রি</h2>
+            {reportPerMonth.length === 0 ? (
+              <p className="mt-3 text-sm text-muted">এখনো কোনো অর্ডার জমা পড়েনি।</p>
+            ) : (
+              <table className="mt-4 w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b text-muted">
+                    <th className="py-2 pr-2">মাস</th>
+                    <th className="py-2 pr-2">অর্ডার</th>
+                    <th className="py-2">বিক্রি (অ্যাপ্রুভ)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportPerMonth.map(m => (
+                    <tr key={m.key} className="border-b border-slate-100">
+                      <td className="py-2 pr-2 font-bold text-ink">{m.label}</td>
+                      <td className="py-2 pr-2">{bn(m.orders)}টি</td>
+                      <td className="py-2 font-bold text-ink">৳{bn(m.revenue)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
       {tab === 'orders' && (
         <div className="mt-6 space-y-3">
           {orders.length === 0 && <p className="rounded-3xl bg-white p-8 text-center text-muted shadow-sm">কোনো পেমেন্ট জমা পড়েনি।</p>}
@@ -313,6 +431,19 @@ export default function Admin() {
                   </select></div>
                 <div><label className={labelCls}>লেভেল</label><input className={inputCls} value={courseForm.level} onChange={e => setCourseForm({ ...courseForm, level: e.target.value })} /></div>
                 <div><label className={labelCls}>শিক্ষক</label><input className={inputCls} value={courseForm.teacher} onChange={e => setCourseForm({ ...courseForm, teacher: e.target.value })} placeholder="আসল নাম লিখুন" /></div>
+              </div>
+              <div>
+                <label className={labelCls}>দায়িত্বপ্রাপ্ত শিক্ষক (ঐচ্ছিক)</label>
+                <select className={inputCls} value={courseForm.teacherUid || ''} onChange={e => {
+                  const t = allUsers.find(u => u.uid === e.target.value)
+                  setCourseForm({ ...courseForm, teacherUid: e.target.value, teacher: t ? t.name : courseForm.teacher })
+                }}>
+                  <option value="">— কোনো শিক্ষক নির্বাচন করা হয়নি —</option>
+                  {allUsers.filter(u => u.role === 'teacher').map(t => (
+                    <option key={t.uid} value={t.uid}>{t.name} ({t.email})</option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-muted">শিক্ষক বেছে নিলে তিনি শিক্ষক প্যানেলে এই কোর্সটি দেখতে পারবেন। শিক্ষক বানাতে ইউজার ট্যাব থেকে কাউকে “শিক্ষক করুন” চাপুন।</p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div><label className={labelCls}>দাম (৳) — ০ দিলে কোর্সটি ফ্রি হবে</label><input type="number" min="0" className={inputCls} value={courseForm.price} onChange={e => setCourseForm({ ...courseForm, price: e.target.value })} /></div>
@@ -412,14 +543,23 @@ export default function Admin() {
             <div key={u.uid} className="rounded-3xl bg-white p-5 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-bold text-ink">{u.name} <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-primary">{u.role === 'admin' ? 'অ্যাডমিন' : 'শিক্ষার্থী'}</span></p>
+                  <p className="font-bold text-ink">{u.name} <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-primary">{u.role === 'admin' ? 'অ্যাডমিন' : u.role === 'teacher' ? 'শিক্ষক' : 'শিক্ষার্থী'}</span></p>
                   <p className="text-sm text-muted">{u.email}</p>
                   <p className="text-sm text-muted">কেনা কোর্স: {(enrolledCourseIds[u.uid] || []).length}টি • লগইন করা ডিভাইস: {(u.devices || []).length}টি (সর্বোচ্চ ২টি)</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {u.role !== 'admin'
-                    ? <button onClick={() => { setUserRole(u.uid, 'admin'); setMsg(`${u.email} কে অ্যাডমিন করা হয়েছে।`) }} className="rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-primary">অ্যাডমিন করুন</button>
-                    : u.uid !== user.uid && <button onClick={() => { setUserRole(u.uid, 'student'); setMsg(`${u.email} কে শিক্ষার্থী করা হয়েছে।`) }} className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-ink">অ্যাডমিন সরান</button>}
+                  {u.role !== 'admin' && (
+                    <button onClick={() => { setUserRole(u.uid, 'admin'); setMsg(`${u.email} কে অ্যাডমিন করা হয়েছে।`) }} className="rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-primary">অ্যাডমিন করুন</button>
+                  )}
+                  {u.role !== 'teacher' && (
+                    <button onClick={() => { setUserRole(u.uid, 'teacher'); setMsg(`${u.email} কে শিক্ষক করা হয়েছে।`) }} className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-800">শিক্ষক করুন</button>
+                  )}
+                  {u.role === 'teacher' && (
+                    <button onClick={() => { setUserRole(u.uid, 'student'); setMsg(`${u.email} কে শিক্ষার্থী করা হয়েছে।`) }} className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-ink">শিক্ষক সরান</button>
+                  )}
+                  {u.role === 'admin' && u.uid !== user.uid && (
+                    <button onClick={() => { setUserRole(u.uid, 'student'); setMsg(`${u.email} কে শিক্ষার্থী করা হয়েছে।`) }} className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-ink">অ্যাডমিন সরান</button>
+                  )}
                 </div>
               </div>
               {(u.devices || []).length > 0 && (
