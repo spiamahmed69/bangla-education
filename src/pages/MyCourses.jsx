@@ -4,8 +4,15 @@ import CourseCard from '../components/CourseCard'
 import { bn } from '../components/CourseCard'
 
 export default function MyCourses() {
-  const { user, courses, orders, enrollments } = useStore()
+  const { user, authLoading, courses, orders, enrollments } = useStore()
 
+  if (authLoading) {
+    return (
+      <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
+        <p className="text-muted">লোড হচ্ছে…</p>
+      </div>
+    )
+  }
   if (!user) {
     return (
       <div className="mx-auto max-w-2xl px-5 pt-16 text-center">

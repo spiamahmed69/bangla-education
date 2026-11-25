@@ -5,7 +5,7 @@ import { bn } from '../components/CourseCard'
 
 export default function Checkout() {
   const { courseId } = useParams()
-  const { getCourse, user, settings, submitOrder, pendingOrderFor, isEnrolled } = useStore()
+  const { getCourse, user, settings, submitOrder, pendingOrderFor, isEnrolled, authLoading, dataLoading } = useStore()
   const navigate = useNavigate()
   const [method, setMethod] = useState('bkash')
   const [senderNumber, setSenderNumber] = useState('')
@@ -16,6 +16,13 @@ export default function Checkout() {
 
   const course = getCourse(courseId)
 
+  if (authLoading || dataLoading) {
+    return (
+      <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
+        <p className="text-muted">লোড হচ্ছে…</p>
+      </div>
+    )
+  }
   if (!user) {
     return (
       <div className="mx-auto max-w-2xl px-5 pt-16 text-center">

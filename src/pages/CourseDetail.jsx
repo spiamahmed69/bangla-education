@@ -5,9 +5,16 @@ import { bn } from '../components/CourseCard'
 
 export default function CourseDetail() {
   const { id } = useParams()
-  const { getCourse, user, isEnrolled, pendingOrderFor } = useStore()
+  const { getCourse, user, isEnrolled, pendingOrderFor, dataLoading } = useStore()
   const course = getCourse(id)
 
+  if (dataLoading) {
+    return (
+      <div className="mx-auto max-w-3xl px-5 pt-16 text-center">
+        <p className="text-muted">লোড হচ্ছে…</p>
+      </div>
+    )
+  }
   if (!course) {
     return (
       <div className="mx-auto max-w-3xl px-5 pt-16 text-center">

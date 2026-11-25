@@ -7,7 +7,7 @@ import SecurePlayer from '../components/SecurePlayer'
 // কেনা হয়নি এমন ইউজারের কাছে iframe তো দূরের কথা, ভিডিওর লিংকও পৌঁছায় না।
 export default function Learn() {
   const { courseId, lessonId } = useParams()
-  const { getCourse, user, isEnrolled, getLessonVideo } = useStore()
+  const { getCourse, user, isEnrolled, getLessonVideo, authLoading, dataLoading } = useStore()
   const [youtubeId, setYoutubeId] = useState(null)
   const [loadingVideo, setLoadingVideo] = useState(true)
 
@@ -26,6 +26,13 @@ export default function Learn() {
     return () => { alive = false }
   }, [enrolled, lesson, courseId, lessonId, getLessonVideo])
 
+  if (authLoading || dataLoading) {
+    return (
+      <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
+        <p className="text-muted">লোড হচ্ছে…</p>
+      </div>
+    )
+  }
   if (!user) {
     return (
       <div className="mx-auto max-w-2xl px-5 pt-16 text-center">

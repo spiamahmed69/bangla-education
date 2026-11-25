@@ -27,7 +27,7 @@ const GRADIENTS = [
 ]
 
 export default function Admin() {
-  const { user, courses, orders, enrollments, allUsers, settings, decideOrder, saveCourse, deleteCourse, saveSettings, setUserRole, logoutDevice } = useStore()
+  const { user, authLoading, courses, orders, enrollments, allUsers, settings, decideOrder, saveCourse, deleteCourse, saveSettings, setUserRole, logoutDevice } = useStore()
   const [tab, setTab] = useState('dashboard')
   const [msg, setMsg] = useState('')
 
@@ -38,6 +38,13 @@ export default function Admin() {
   const [lessonForm, setLessonForm] = useState(null)
   const [settingsForm, setSettingsForm] = useState(null)
 
+  if (authLoading) {
+    return (
+      <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
+        <p className="text-muted">লোড হচ্ছে…</p>
+      </div>
+    )
+  }
   if (!user) {
     return (
       <div className="mx-auto max-w-2xl px-5 pt-16 text-center">
