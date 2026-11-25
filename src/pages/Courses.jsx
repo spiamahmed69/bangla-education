@@ -21,7 +21,7 @@ export default function Courses() {
   return (
     <div className="mx-auto max-w-6xl px-5 pt-10">
       <h1 className="text-3xl font-bold text-ink">কোর্সসমূহ</h1>
-      <p className="mt-2 text-muted">সব কোর্স নমুনা হিসেবে দেখানো হচ্ছে। পছন্দের কোর্স খুঁজে কিনুন।</p>
+      <p className="mt-2 text-muted">{courses.length > 0 && courses.every(c => c.sample) ? 'সব কোর্স নমুনা হিসেবে দেখানো হচ্ছে। পছন্দের কোর্স খুঁজে কিনুন।' : 'পছন্দের কোর্স খুঁজে কিনুন।'}</p>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <input

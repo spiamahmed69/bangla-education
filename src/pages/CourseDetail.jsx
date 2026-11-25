@@ -27,11 +27,11 @@ export default function CourseDetail() {
           <CoverArt title={course.title} gradient={course.gradient} imageUrl={course.imageUrl} className="h-56 w-full rounded-[2rem] sm:h-72" />
           <div className="mt-5 flex flex-wrap gap-2">
             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-primary">{course.level}</span>
-            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">নমুনা কোর্স</span>
+            {course.sample && <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">নমুনা কোর্স</span>}
           </div>
           <h1 className="mt-4 text-3xl font-bold text-ink">{course.title}</h1>
           <p className="mt-2 text-muted">{course.description}</p>
-          <p className="mt-3 text-sm text-muted">শিক্ষক: {course.teacher} (নমুনা)</p>
+          <p className="mt-3 text-sm text-muted">শিক্ষক: {course.teacher}{course.sample ? ' (নমুনা)' : ''}</p>
 
           <h2 className="mt-8 text-xl font-bold text-ink">ক্লাসের তালিকা ({course.lessons?.length || 0}টি)</h2>
           <div className="mt-4 space-y-3">
